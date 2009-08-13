@@ -149,6 +149,7 @@
     player))
 
 (defn game-loop
+; TODO - make this use JFrame 
   []
   (loop [command (read-line)
 	 world (gen-world)
