@@ -13,8 +13,8 @@
 
 (defn is-symbol?
   "pred - if tile is floor"
-  [world x y s]
-  (= (nth (nth world y) x) s))
+  [world y x s]
+  (= (nth (nth world x) y) s))
 
 (defn- get-floor-tile
   "find an empty floor tile"
@@ -162,22 +162,42 @@
 			      :player (move-player player 
 						   new-world 
 						   (first player) 
+						   (- (second player) 1)))
+			"q" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (- (first player) 1) 
 						   (- (second player) 1)))      
 			"w" (assoc sprites 
 			      :player (move-player player 
 						   new-world 
 						   (- (first player) 1) 
 						   (second player)))
+			"e" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (- (first player) 1) 
+						   (+ (second player) 1)))
 			"d" (assoc sprites 
 			      :player (move-player player 
 						   new-world 
 						   (first player) 
+						   (+ (second player) 1)))
+			"c" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (+ (first player) 1) 
 						   (+ (second player) 1)))
 			"x" (assoc sprites 
 			      :player (move-player player 
 						   new-world 
 						   (+ (first player) 1) 
 						   (second player)))
+			"z" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (+ (first player) 1)
+						   (- (second player) 1)))
 			sprites)]
       (print-world new-world new-sprites)
       (println)
