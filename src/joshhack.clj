@@ -92,6 +92,7 @@
      {})
 
 (defn render-sprites
+  "places the sprites on the world map"
   [world sprites]
   (loop [w world
 	 s sprites]
