@@ -4,21 +4,21 @@
 	   [java.awt Font]
 	   [java.awt.event KeyListener KeyEvent]))
 
-(def max-x 20)
-(def max-y 20)
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
 ;;;; World State
 
-(def world-state (ref :none)
+(def max-x 20)
+(def max-y 20)
 
+(def world-state (ref :none)
 (def sprites-state (ref :none))
 
 (defn alter-game-state
   "takes functions executes each and set-refs world-state and sprites-state"
-  [f])
+  [f]
+  ;; TODO 
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
@@ -40,34 +40,35 @@
 
 (defn- add-object
   "adds an object, replaces an existing floor tile"
-  [world symbol]
-  (let [empty (get-floor-tile world)]
-    (assoc-in world empty symbol)))
+  [symbol]
+  (let [empty (get-floor-tile)]
+    (dosync (alter world-state assoc-in empty symbol))))
+
 
 (defn- add-sprite
   "adds sprite, sets position"
-  [world sprites symbol]
-  (let [empty (get-floor-tile world)]
-    (assoc sprites symbol empty)))
+  [symbol]
+  (let [empty (get-floor-tile)] 
+    (dosync (alter sprites-state assoc symbol empty))))
 
 (defn move-player
-  [player w x y]
+  [v h]
+  (let [y (+ (first player) v)
+	x (+ (second player) h)]
   (if (and (< 0 x) 
 	   (< 0 y) 
-	   (> (count w) x) 
-	   (> (count (first w)) y)
-	   (is-symbol? w y x :floor))
-    [x y]
-    (assoc sprites 
-      :player (move-player player 
-			   new-world 
-			   (first player) 
-			   (- (second player) 1)))
-    player))
+	   (> (count (first @world-state)) x)
+	   (> (count @world-state) y) 
+	   (is-symbol? x y :floor))
+    (dosync (alter sprites-state assoc :player [x y])))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
 ;;;; World Utils
+
+
+;;;;;;;;;;;;;;;;;;;; made it to here 
+
 
 (defn- draw-room
   "Draws a room at the supplied position, size, etc."
@@ -194,56 +195,23 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
-;;;; JFrame / Main 
+;;;; Listener / JFrame / Main 
 
 (def keyboard-handler
      (proxy [KeyListener] []
        (keyTyped [ke]
 		 (let [c (. ke getKeyChar)]
 		   (condp = c
-			"a" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (first player) 
-						   (- (second player) 1)))
-			"q" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (- (first player) 1) 
-						   (- (second player) 1)))      
-			"w" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (- (first player) 1) 
-						   (second player)))
-			"e" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (- (first player) 1) 
-						   (+ (second player) 1)))
-			"d" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (first player) 
-						   (+ (second player) 1)))
-			"c" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (+ (first player) 1) 
-						   (+ (second player) 1)))
-			"x" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (+ (first player) 1) 
-						   (second player)))
-			"z" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (+ (first player) 1)
-						   (- (second player) 1)))		   
+		     "a" (move-player -1 0)
+		     "q" (move-player -1 -1)
+		     "w" (move-player  0 -1)
+		     "e" (move-player 1 -1)
+		     "d" (move-player 1 0)
+		     "c" (move-player 1 1)
+		     "x" (move-player 0 1)
+		     "z" (move-player -1 1))))
        (keyPressed [ke] nil)
        (keyReleased [ke] nil)))
-	 
 
 (defn -main
   [& args]
@@ -259,68 +227,6 @@
     (.setDefaultCloseOperation (. JFrame EXIT_ON_CLOSE))
     (.setVisible true)))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; old code 
-
-(comment
-(defn game-loop
-; TODO - make this use JFrame 
-  []
-  (loop [command (read-line)
-	 world (gen-world)
-	 sprites (gen-sprites world)]
-    (let [new-world (condp = command
-;		      "add" (add-room world)
-;		      "stairs" (add-object world :stairs-up)
-		      world)
-	  player (:player sprites)
-	  new-sprites (condp = command
-			"a" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (first player) 
-						   (- (second player) 1)))
-			"q" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (- (first player) 1) 
-						   (- (second player) 1)))      
-			"w" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (- (first player) 1) 
-						   (second player)))
-			"e" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (- (first player) 1) 
-						   (+ (second player) 1)))
-			"d" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (first player) 
-						   (+ (second player) 1)))
-			"c" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (+ (first player) 1) 
-						   (+ (second player) 1)))
-			"x" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (+ (first player) 1) 
-						   (second player)))
-			"z" (assoc sprites 
-			      :player (move-player player 
-						   new-world 
-						   (+ (first player) 1)
-						   (- (second player) 1)))
-			sprites)]
-      (print-world new-world new-sprites)
-      (println)
-      (recur (read-line) new-world new-sprites))))
-)
-
 ;;;;;; testing 
 
 (comment
@@ -328,6 +234,3 @@
 	(print-world w (gen-sprites w)) 
 	(println)))
 )
-
-
-
