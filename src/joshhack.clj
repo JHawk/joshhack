@@ -7,29 +7,63 @@
 (def max-x 20)
 (def max-y 20)
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; 
+;;;; World State
+
+(def world-state (ref :none)
+
+(def sprites-state (ref :none))
+
+(defn alter-game-state
+  "takes functions executes each and set-refs world-state and sprites-state"
+  [f])
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
 ;;;; Object Utils
 
 (defn is-symbol?
   "pred - if tile is floor"
-  [world y x s]
-  (= (nth (nth world x) y) s))
+  [y x s]
+  (= (nth (nth @world-state x) y) s))
 
 (defn- get-floor-tile
   "find an empty floor tile"
-  [world]
-  (let [guess-x (rand-int (- (count (first world)) 1))
-	guess-y (rand-int (- (count world) 1))]
-    (if (is-symbol? world guess-x guess-y :floor)
+  []
+  (let [guess-x (rand-int (- (count (first @world-state)) 1))
+	guess-y (rand-int (- (count @world-state) 1))]
+    (if (is-symbol? guess-x guess-y :floor)
       (vector guess-y guess-x)
-      (get-floor-tile world))))
+      (get-floor-tile))))
 
 (defn- add-object
   "adds an object, replaces an existing floor tile"
   [world symbol]
   (let [empty (get-floor-tile world)]
     (assoc-in world empty symbol)))
+
+(defn- add-sprite
+  "adds sprite, sets position"
+  [world sprites symbol]
+  (let [empty (get-floor-tile world)]
+    (assoc sprites symbol empty)))
+
+(defn move-player
+  [player w x y]
+  (if (and (< 0 x) 
+	   (< 0 y) 
+	   (> (count w) x) 
+	   (> (count (first w)) y)
+	   (is-symbol? w y x :floor))
+    [x y]
+    (assoc sprites 
+      :player (move-player player 
+			   new-world 
+			   (first player) 
+			   (- (second player) 1)))
+    player))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
@@ -54,15 +88,6 @@
 					  (nth (nth world i) j))))
 			(nth world i)))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; 
-;;;; World Generation
-
-(defn gen-empty-world 
-  "Generates an empty world"
-  [] 
-  (apply vector (take max-y (repeat (apply vector (take max-x (repeat :none)))))))
-
 (defn add-room
   "Adds a room to a world"
   [world]
@@ -80,35 +105,14 @@
 	       (- height 2)
 	       :floor)))
 
-(def symbol-world
-     {:none "."
-      :floor " "
-      :wall "#"
-      :stairs-down ">"
-      :stairs-up "<"
-      :player "@"})
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; 
+;;;; World Generation
 
-(def sprites-map
-     {})
-
-(defn render-sprites
-  "places the sprites on the world map"
-  [world sprites]
-  (loop [w world
-	 s sprites]
-    (if (empty? s)
-      w
-      (let [tile (first (first s))
-	    x (first (second (first s)))
-	    y (second (second (first s)))]
-	(recur (assoc-in world [x y] tile) (rest s))))))
-
-(defn print-world 
-  [world sprites]
-  (doseq [row (render-sprites world sprites)] 
-    (doseq [token (doall row)] 
-      (print (symbol-world token)))
-    (println)))
+(defn gen-empty-world 
+  "Generates an empty world"
+  [] 
+  (apply vector (take max-y (repeat (apply vector (take max-x (repeat :none)))))))
 
 (defn gen-world-with-rooms [x]
   "gens a world with x rooms"
@@ -125,29 +129,140 @@
    (gen-world-with-rooms (+ 1 (rand-int 4))) 
    :stairs-down))
 
-;(defn- add-sprite
-;  "adds sprite, sets position"
-;  [world sprites symbol]
-;  (let [empty (get-floor-tile world)]
-;    (assoc sprites symbol empty)))
-
 (defn gen-sprites
   "add starting sprites"
   [world]
-  (let [e (get-floor-tile world)]
+  (let [e (get-floor-tile world)
+	sprites-map {}]
     (assoc sprites-map :player e)))
- ; (add-sprite world sprites-map :player))
 
-(defn move-player
-  [player w x y]
-  (if (and (< 0 x) 
-	   (< 0 y) 
-	   (> (count w) x) 
-	   (> (count (first w)) y)
-	   (is-symbol? w y x :floor))
-    [x y]
-    player))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; 
+;;;; Draw Functions
 
+(def symbol-world
+     {:none "."
+      :floor " "
+      :wall "#"
+      :stairs-down ">"
+      :stairs-up "<"
+      :player "@"})
+
+(defn render-sprites
+  "places the sprites on the world map"
+  [world sprites]
+  (loop [w world
+	 s sprites]
+    (if (empty? s)
+      w
+      (let [tile (first (first s))
+	    x (first (second (first s)))
+	    y (second (second (first s)))]
+	(recur (assoc-in world [x y] tile) (rest s))))))
+
+; replaced with draw-world
+(defn print-world 
+  [world sprites]
+  (doseq [row (render-sprites world sprites)] 
+    (doseq [token (doall row)] 
+      (print (symbol-world token)))
+    (println)))
+
+(defn draw-world 
+  [world sprites]
+  (apply str (for [row (render-sprites world sprites)] 
+	       (apply str (concat (for [token (doall row)] 
+				    (symbol-world token))
+				  [\newline])))))
+
+(defn draw-init-world
+  []
+  (let [w gen-world]
+    (draw-world w (gen-sprites w))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; 
+;;;; World State
+
+;(def world-state (ref (gen-world)))
+
+;(def sprites-state (ref (gen-sprites @world-state)))
+
+;(defn alter-game-state
+;  "takes functions executes each and set-refs world-state and sprites-state"
+;  [f])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; JFrame / Main 
+
+(def keyboard-handler
+     (proxy [KeyListener] []
+       (keyTyped [ke]
+		 (let [c (. ke getKeyChar)]
+		   (condp = c
+			"a" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (first player) 
+						   (- (second player) 1)))
+			"q" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (- (first player) 1) 
+						   (- (second player) 1)))      
+			"w" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (- (first player) 1) 
+						   (second player)))
+			"e" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (- (first player) 1) 
+						   (+ (second player) 1)))
+			"d" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (first player) 
+						   (+ (second player) 1)))
+			"c" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (+ (first player) 1) 
+						   (+ (second player) 1)))
+			"x" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (+ (first player) 1) 
+						   (second player)))
+			"z" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (+ (first player) 1)
+						   (- (second player) 1)))		   
+       (keyPressed [ke] nil)
+       (keyReleased [ke] nil)))
+	 
+
+(defn -main
+  [& args]
+  (doto (JFrame.)
+    (.setSize (* 8 max-x) (+ 25 (* 18 max-y)))
+    (.add (doto (JPanel.)
+	    (.add (doto (JTextArea. max-x max-y)
+		    (.setEditable false)
+		    (.setFont (Font. "Monospaced" (. Font PLAIN) 14 ))
+		    (.setText (draw-world @world-state @sprites-state))
+		    (.addKeyListener keyboard-handler)))))
+    (.setResizable false)
+    (.setDefaultCloseOperation (. JFrame EXIT_ON_CLOSE))
+    (.setVisible true)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; old code 
+
+(comment
 (defn game-loop
 ; TODO - make this use JFrame 
   []
@@ -204,38 +319,7 @@
       (print-world new-world new-sprites)
       (println)
       (recur (read-line) new-world new-sprites))))
-
-
-
-(defn draw-world 
-  [world sprites]
-  (apply str (for [row (render-sprites world sprites)] 
-	       (apply str (concat (for [token (doall row)] 
-				  (symbol-world token))
-				[\newline])))))
-
-(def keyboard-handler
-     (proxy [KeyListener] []
-       (keyTyped [ke]
-		 (let [c (. ke getKeyChar)]
-		   
-       (keyPressed [ke] nil)
-       (keyReleased [ke] nil)))
-	 
-
-(defn -main
-  [& args]
-  (doto (JFrame.)
-    (.setSize (* 8 max-x) (+ 25 (* 18 max-y)))
-    (.add (doto (JPanel.)
-	    (.add (doto (JTextArea. max-x max-y)
-		    (.setEditable false)
-		    (.setFont (Font. "Monospaced" (. Font PLAIN) 14 ))
-		    (.setText (draw-world (add-room (gen-empty-world)) {:player [1 2]}))
-		    (.addKeyListener keyboard-handler)))))
-    (.setResizable false)
-    (.setDefaultCloseOperation (. JFrame EXIT_ON_CLOSE))
-    (.setVisible true)))
+)
 
 ;;;;;; testing 
 
@@ -244,5 +328,6 @@
 	(print-world w (gen-sprites w)) 
 	(println)))
 )
+
 
 
