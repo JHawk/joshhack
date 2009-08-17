@@ -31,6 +31,8 @@
     <java classname="clojure.lang.Compile" fork="true">
       <classpath refid="joshhack.classpath" />
       <sysproperty key="clojure.compile.path" value="${build}"/>
+      <arg value="joshhack.world"/>
+      <arg value="joshhack.sprite"/>
       <arg value="joshhack"/>
     </java>
   </target>
