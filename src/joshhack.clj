@@ -58,13 +58,3 @@
     (.setResizable false)
     (.setDefaultCloseOperation (. JFrame EXIT_ON_CLOSE))
     (.setVisible true)))
-
-;;;;;; testing 
-
-(comment
-  (do (let [w (gen-world)]
-	(print-world w (gen-sprites w)) 
-	(println)))
-)
-
-
