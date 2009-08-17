@@ -82,7 +82,7 @@
   "Makes a world with random rooms and adds starting objects"
   [max-x max-y]
   (add-object 
-   (gen-world-with-rooms (+ 1 (rand-int 4) max-x max-y)) 
+   (gen-world-with-rooms (+ 1 (rand-int 4)) max-x max-y) 
    :stairs-down))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
