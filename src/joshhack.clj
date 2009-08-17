@@ -31,19 +31,22 @@
 					     :player (sprite/move-player 
 						      (@sprite-state :player)
 						      @world-state
-						      x y)))
+						      x y))
+				      ;;;; should i pass the JFrame into this function or - redraw in main???
+				      (.setText (world/draw-world @world-state @sprite-state)))
 			       x (first player)
 			       y (second player)
 			       c (. ke getKeyChar)]
 			   (condp = c
-			     "a" (move x (- y 1))
-			     "q" (move (- x 1) (- y 1))
-			     "w" (move (- x 1) y)
-			     "e" (move (- x 1) (+ y 1))
-			     "d" (move x (+ y 1)) 
-			     "c" (move (+ x 1) (+ y 1))  
-			     "x" (move (+ x 1) y)   
-			     "z" (move (+ x 1) (- y 1))))))))
+			     \a (move x (- y 1))
+			     \q (move (- x 1) (- y 1))
+			     \w (move (- x 1) y)
+			     \e (move (- x 1) (+ y 1))
+			     \d (move x (+ y 1)) 
+			     \c (move (+ x 1) (+ y 1))  
+			     \x (move (+ x 1) y)   
+			     \z (move (+ x 1) (- y 1))
+			     nil))))))
 
 (defn -main
   [& args]
