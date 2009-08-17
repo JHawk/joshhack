@@ -24,43 +24,47 @@
 ;;;; 
 ;;;; Object Utils
 
+
 (defn is-symbol?
   "pred - if tile is floor"
-  [y x s]
-  (= (nth (nth @world-state x) y) s))
+  [world y x s]
+  (= (nth (nth world x) y) s))
 
 (defn- get-floor-tile
   "find an empty floor tile"
-  []
-  (let [guess-x (rand-int (- (count (first @world-state)) 1))
-	guess-y (rand-int (- (count @world-state) 1))]
-    (if (is-symbol? guess-x guess-y :floor)
+  [world]
+  (let [guess-x (rand-int (- (count (first world)) 1))
+	guess-y (rand-int (- (count world) 1))]
+    (if (is-symbol? world guess-x guess-y :floor)
       (vector guess-y guess-x)
-      (get-floor-tile))))
+      (get-floor-tile world))))
 
 (defn- add-object
   "adds an object, replaces an existing floor tile"
-  [symbol]
-  (let [empty (get-floor-tile)]
-    (dosync (alter world-state assoc-in empty symbol))))
+  [world symbol]
+  (let [empty (get-floor-tile world)]
+    (assoc-in world empty symbol)))
 
-
-(defn- add-sprite
-  "adds sprite, sets position"
-  [symbol]
-  (let [empty (get-floor-tile)] 
-    (dosync (alter sprites-state assoc symbol empty))))
+;(defn move-player
+;  [v h]
+;  (let [y (+ (first player) v)
+;	x (+ (second player) h)]
+;  (if (and (< 0 x) 
+;	   (< 0 y) 
+;	   (> (count (first @world-state)) x)
+;	   (> (count @world-state) y) 
+;	   (is-symbol? x y :floor))
+;    (dosync (alter sprites-state assoc :player [x y])))))
 
 (defn move-player
-  [v h]
-  (let [y (+ (first player) v)
-	x (+ (second player) h)]
+  [player w x y]
   (if (and (< 0 x) 
 	   (< 0 y) 
-	   (> (count (first @world-state)) x)
-	   (> (count @world-state) y) 
-	   (is-symbol? x y :floor))
-    (dosync (alter sprites-state assoc :player [x y])))))
+	   (> (count w) x) 
+	   (> (count (first w)) y)
+	   (is-symbol? w y x :floor))
+    [x y]
+    player))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
@@ -182,18 +186,6 @@
     (draw-world w (gen-sprites w))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; 
-;;;; World State
-
-;(def world-state (ref (gen-world)))
-
-;(def sprites-state (ref (gen-sprites @world-state)))
-
-;(defn alter-game-state
-;  "takes functions executes each and set-refs world-state and sprites-state"
-;  [f])
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
 ;;;; Listener / JFrame / Main 
 
@@ -202,14 +194,46 @@
        (keyTyped [ke]
 		 (let [c (. ke getKeyChar)]
 		   (condp = c
-		     "a" (move-player -1 0)
-		     "q" (move-player -1 -1)
-		     "w" (move-player  0 -1)
-		     "e" (move-player 1 -1)
-		     "d" (move-player 1 0)
-		     "c" (move-player 1 1)
-		     "x" (move-player 0 1)
-		     "z" (move-player -1 1))))
+			"a" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (first player) 
+						   (- (second player) 1)))
+			"q" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (- (first player) 1) 
+						   (- (second player) 1)))      
+			"w" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (- (first player) 1) 
+						   (second player)))
+			"e" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (- (first player) 1) 
+						   (+ (second player) 1)))
+			"d" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (first player) 
+						   (+ (second player) 1)))
+			"c" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (+ (first player) 1) 
+						   (+ (second player) 1)))
+			"x" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (+ (first player) 1) 
+						   (second player)))
+			"z" (assoc sprites 
+			      :player (move-player player 
+						   new-world 
+						   (+ (first player) 1)
+						   (- (second player) 1)))
        (keyPressed [ke] nil)
        (keyReleased [ke] nil)))
 
@@ -234,3 +258,5 @@
 	(print-world w (gen-sprites w)) 
 	(println)))
 )
+
+
