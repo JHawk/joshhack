@@ -20,7 +20,8 @@
 ;;;;
 ;;;; Listener / JFrame / Main 
 
-(def keyboard-handler
+(defn gen-keyboard-handler
+  [text-area]
      (proxy [KeyListener] []
        (keyPressed [ke] nil)
        (keyReleased [ke] nil)
@@ -32,8 +33,7 @@
 						      (@sprite-state :player)
 						      @world-state
 						      x y))
-				      ;;;; should i pass the JFrame into this function or - redraw in main???
-				      (.setText (world/draw-world @world-state @sprite-state)))
+				      (. text-area (setText (world/draw-world @world-state @sprite-state))))
 			       x (first player)
 			       y (second player)
 			       c (. ke getKeyChar)]
@@ -50,14 +50,16 @@
 
 (defn -main
   [& args]
-  (doto (JFrame.)
+(let [frame (JFrame.)
+      text-area (JTextArea. max-x max-y)]
+  (doto frame
     (.setSize (* 8 max-x) (+ 25 (* 18 max-y)))
     (.add (doto (JPanel.)
-	    (.add (doto (JTextArea. max-x max-y)
+	    (.add (doto text-area
 		    (.setEditable false)
 		    (.setFont (Font. "Monospaced" (. Font PLAIN) 14 ))
 		    (.setText (world/draw-world @world-state @sprite-state))
-		    (.addKeyListener keyboard-handler)))))
+		    (.addKeyListener (gen-keyboard-handler text-area))))))
     (.setResizable false)
     (.setDefaultCloseOperation (. JFrame EXIT_ON_CLOSE))
-    (.setVisible true)))
+    (.setVisible true))))
