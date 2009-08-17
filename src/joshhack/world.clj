@@ -32,11 +32,17 @@
   "Divides the number of tile by total area and returns decimal"
   [world tile]
   (let [y (count world)
-	is-floor? (fn [x] (= x tile))]
-    (/ (count-if is-floor? 
+	is-floor? (fn [x] (= x tile))
+	tiles (count-if is-floor? 
 		 (apply concat (for [i (range 0 y)] world)))
-       (* (count (first world)) 
-	  (count world)))))
+	total (* (count (first world)) 
+	   (count world))]
+    (do 
+      (println y)
+      (println tiles)
+      (println total)
+      100
+      )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
