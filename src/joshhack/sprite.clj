@@ -8,7 +8,7 @@
 (def sprites-map {})
 
 (defn gen-sprites
-  "add starting sprites"
+  "Adds starting sprites"
   [world]
   (let [e (world/get-floor-tile world)]
     (assoc sprites-map :player e)))
@@ -18,6 +18,7 @@
 ;;;; Sprites Utils
 
 (defn move-player
+  "Changes the players location if the new location is legal"
   [player w x y]
   (if (and (< 0 x) 
 	   (< 0 y) 

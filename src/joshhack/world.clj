@@ -5,12 +5,12 @@
 ;;;; Object Utils
 
 (defn is-symbol?
-  "pred - if tile is floor"
-  [world y x s]
-  (= (nth (nth world x) y) s))
+  "Return true if x y is a tile"
+  [world y x tile]
+  (= (nth (nth world x) y) tile))
 
 (defn get-floor-tile
-  "find an empty floor tile"
+  "Find a random floor tile"
   [world]
   (let [guess-x (rand-int (- (count (first world)) 1))
 	guess-y (rand-int (- (count world) 1))]
@@ -19,10 +19,10 @@
       (get-floor-tile world))))
 
 (defn- add-object
-  "adds an object, replaces an existing floor tile"
-  [world symbol]
+  "Adds an object, replaces an existing floor tile with type tile"
+  [world tile]
   (let [empty (get-floor-tile world)]
-    (assoc-in world empty symbol)))
+    (assoc-in world empty tile)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
@@ -70,8 +70,8 @@
 	       :floor)))
 
 (defn gen-world-with-rooms 
+  "Generates a world with x rooms"  
   [x max-x max-y]
-  "gens a world with x rooms"
   (loop [world (gen-empty-world max-x max-y)
 	 c x]
     (if (= c 0)
@@ -79,7 +79,7 @@
       (recur (add-room world) (- c 1)))))
 
 (defn gen-world
-  "makes a world and binds it to ref game-world"
+  "Makes a world with random rooms and adds starting objects"
   [max-x max-y]
   (add-object 
    (gen-world-with-rooms (+ 1 (rand-int 4) max-x max-y)) 
@@ -98,7 +98,7 @@
       :player "@"})
 
 (defn render-sprites
-  "places the sprites on the world map"
+  "Draws sprites over the world map"
   [world sprites]
   (loop [w world
 	 s sprites]
@@ -110,6 +110,7 @@
 	(recur (assoc-in world [x y] tile) (rest s))))))
 
 (defn draw-world 
+  "Returns a string representation of the world with sprites"
   [world sprites]
   (apply str (for [row (render-sprites world sprites)] 
 	       (apply str (concat (for [token (doall row)] 
