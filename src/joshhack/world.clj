@@ -73,7 +73,7 @@
 					   (nth (nth world i) j))))
 			 (nth world i)))))))
 
-(defn add-room
+(defn- add-room
   "Adds a room to a world"
   [world]
   (let [max-x (count (first world))
@@ -89,6 +89,45 @@
 	       (- height 2)
 	       :floor)))
 
+(def directions [[1 0] [-1 0] [0 1] [0 -1]
+		 [1 1] [-1 1] [-1 -1] [1 -1]])
+
+(defn random-tile-steps
+  "Random change in position in the x or y direction takes a starting position and a magnitude" 
+  [w start-x start-y steps tile]
+  (let [dir (nth (directions) (rand-int 8))]
+    (loop [w world
+	   x start-x
+	   y start-y
+	   s steps] 
+      (if (zero? s)
+	points
+	(let [new-x (+ x (first dir))
+	      new-y (+ y (second dir))]
+	  (recur (assoc-in w (apply vector '(new-x new-y)) tile) new-x new-y (dec s)))))))
+
+(defn- add-pool
+  "Adds a pool of water to a world"
+  [world]
+  (let [e (get-floor-tile world)]
+    (loop [w world 
+	   x (second e)
+	   y (first e)
+	   s (+ 10 (rand-int 12))]
+      (if (zero? s)
+	w
+	(let [new-tiles (random-rook-steps x y 2)]
+	  (recur (assoc-in w new-tiles :water) (first (last new-tiles)) (second (last new-tiles)) (dec s)))))))
+
+;(defn- connect-room
+;  "Connects rooms with tunnels if floor tiles do not overlap"
+;  [world]
+;  (if (only room or overlap)
+;    world 
+;    tunnel to floor tile not in this room))
+
+
+ ;; add connect-room to recur when ready 
 (defn- gen-world-with-rooms 
   "Generates a world with rooms covering min-floor-coverage of the map"  
   [max-x max-y]
@@ -100,9 +139,8 @@
 (defn gen-world
   "Makes a world with random rooms and adds starting objects"
   [max-x max-y]
-  (add-object 
-   (gen-world-with-rooms max-x max-y) 
-   :water))
+  (add-pool 
+   (gen-world-with-rooms max-x max-y)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
@@ -122,7 +160,7 @@
       :stairs-up "<"
       :player "@"})
 
-(defn render-sprites
+(defn- render-sprites
   "Draws sprites over the world map"
   [world sprites]
   (loop [w world
@@ -141,16 +179,3 @@
 	       (apply str (concat (for [token (doall row)] 
 				  (symbol-world token))
 				[\newline])))))
-
-
-;;;;;;;;;;;;;;;;;;;; testing 
-
-(defn print-world 
-  [world]
-  (doseq [token (doall world)] 
-    (print (symbol-world token)))
-  (println))
-
-(comment 
-  (print-world (gen-world 30 30))
-)
