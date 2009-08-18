@@ -102,16 +102,22 @@
   [max-x max-y]
   (add-object 
    (gen-world-with-rooms max-x max-y) 
-   :stairs-down))
+   :water))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
 ;;;; Draw Utils
 
 (def symbol-world
-     {:none "."
+     {
+
+      ;;; world 
+      :none "."
       :floor " "
       :wall "#"
+      :water "~"
+
+      ;;; sprites
       :stairs-down ">"
       :stairs-up "<"
       :player "@"})
@@ -126,7 +132,7 @@
       (let [tile (first (first s))
 	    x (first (second (first s)))
 	    y (second (second (first s)))]
-	(recur (assoc-in world [x y] tile) (rest s))))))
+	(recur (assoc-in w [x y] tile) (rest s))))))
 
 (defn draw-world 
   "Returns a string representation of the world with sprites"

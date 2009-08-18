@@ -7,11 +7,18 @@
 
 (def sprites-map {})
 
+(defn- add-sprite
+  "Adds an object, replaces an existing floor tile with type tile"
+  [world tile sprites]
+  (let [empty (world/get-floor-tile world)]
+    (assoc sprites tile empty)))
+
 (defn gen-sprites
   "Adds starting sprites"
   [world]
-  (let [e (world/get-floor-tile world)]
-    (assoc sprites-map :player e)))
+  (add-sprite world :player 
+	      (add-sprite world :stairs-up 
+			  (add-sprite world :stairs-down sprites-map))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
