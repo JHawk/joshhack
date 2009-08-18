@@ -1,6 +1,7 @@
 (ns joshhack.world)
 
 (def min-floor-cover 0.25)
+(def min-room 8)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
@@ -77,7 +78,6 @@
   [world]
   (let [max-x (count (first world))
 	max-y (count world)
-	min-room 5
 	width (+ min-room (rand-int 4))
 	height (+ min-room (rand-int 4))
 	x (rand-int (- max-x width 1))
