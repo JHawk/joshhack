@@ -1,6 +1,6 @@
 (ns joshhack.world)
 
-(def min-floor-cover 0.5)
+(def min-floor-cover 0.25)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
@@ -28,21 +28,21 @@
   (let [empty (get-floor-tile world)]
     (assoc-in world empty tile)))
 
+(defn world-size
+  "Returns the area of the world"
+  [world]
+  (* (count (first world)) (count world)))
+
+(defn total-tiles
+  "Returns the total number of tiles in world of tile type"
+  [world tile]
+  (let [is-tile? (fn [x] (= x tile))]
+    (count-if is-tile? (apply concat world))))
+
 (defn tile-coverage
   "Divides the number of tile by total area and returns decimal"
   [world tile]
-  (let [y (count world)
-	is-floor? (fn [x] (= x tile))
-	tiles (count-if is-floor? 
-		 (apply concat (for [i (range 0 y)] world)))
-	total (* (count (first world)) 
-	   (count world))]
-    (do 
-      (println y)
-      (println tiles)
-      (println total)
-      100
-      )))
+  (/ (total-tiles world tile) (world-size world)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
