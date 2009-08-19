@@ -181,7 +181,7 @@
   "Adds a pool of water to a world"
   [world]
   (let [e (get-floor-tile world)]
-    (random-queen-tile-steps world (first e) (second e) 1 (+ 10 (rand-int 100)) :water)))
+    (random-queen-tile-steps world (first e) (second e) 1 (+ 10 (rand-int 70)) :water)))
 
 (defn- connect-room
   "Connects rooms with tunnels if floor tiles do not overlap"
