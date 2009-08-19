@@ -16,16 +16,10 @@
   [world]
   (add-sprite world :stairs-down
 	      (add-sprite world :stairs-up 
-			  (add-sprite world :player {}))))
+			  (add-sprite world :monster {}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
 ;;;; Sprites Utils
 
-(defn move-player
-  "Changes the players location if the new location is legal"
-  [player w x y]
-  (if (and (world/position-in-world? w x y)
-	   (or (world/is-symbol? w y x :floor) (world/is-symbol? w y x :water)))
-    [x y]
-    player))
+

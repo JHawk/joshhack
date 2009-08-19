@@ -4,17 +4,19 @@
 	   [java.awt Font]
 	   [java.awt.event KeyListener KeyEvent])
   (:require [joshhack.world :as world]
-	    [joshhack.sprite :as sprite]))
+	    [joshhack.sprite :as sprite]
+	    [joshhack.player :as player]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
 ;;;; World State
 
-(def max-x 100)
+(def max-x 70)
 (def max-y 50)
 
 (def world-state (ref (world/gen-world max-x max-y)))
 (def sprite-state (ref (sprite/gen-sprites @world-state)))
+(def player-state (ref (player/gen-player @world-state)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -26,16 +28,24 @@
        (keyPressed [ke] nil)
        (keyReleased [ke] nil)
        (keyTyped [ke]
-		 (dosync (let [player (@sprite-state :player) 
+		 (dosync (let [position (@player-state :position) 
+;			       npcs ()
+;			       do-npc-turns (fn [] 
+;					      
+;					      (alter ))
 			       move (fn [x y] 
-				      (alter sprite-state assoc 
-					     :player (sprite/move-player 
-						      (@sprite-state :player)
-						      @world-state
-						      x y))
-				      (. text-area (setText (world/draw-world @world-state @sprite-state))))
-			       x (first player)
-			       y (second player)
+				      (alter player-state assoc 
+					     :position (player/move-player 
+							(@player-state :position)
+							@world-state
+							x y))
+;				      (do-npc-turns)
+				      (. text-area (setText (world/draw-world 
+							     @world-state 
+							     @sprite-state 
+							     @player-state))))
+			       x (first position)
+			       y (second position)
 			       c (. ke getKeyChar)]
 			   (condp = c
 			     \a (move x (- y 1))
@@ -58,7 +68,10 @@
 	    (.add (doto text-area
 		    (.setEditable false)
 		    (.setFont (Font. "Monospaced" (. Font PLAIN) 14 ))
-		    (.setText (world/draw-world @world-state @sprite-state))
+		    (.setText (world/draw-world 
+			       @world-state 
+			       @sprite-state 
+			       @player-state))
 		    (.addKeyListener (gen-keyboard-handler text-area))))))
     (.setResizable false)
     (.setDefaultCloseOperation (. JFrame EXIT_ON_CLOSE))

@@ -151,37 +151,49 @@
 ;;; TODO - make it not double back
 (defn- random-tile-steps
   "Changes tiles from starting position takes number of steps, number of turns, a tile, and a means of finding a direction" 
-  [world start-x start-y steps turns tile rand-dir]
-  (loop [w world
-	 x start-x
-	 y start-y
-	 s steps
-	 t turns] 
-    (if (zero? t)
-      w
-      (let [dir (rand-dir)
-	    new-x (+ x (* steps (first dir)))
-	    new-y (+ y (* steps (second dir)))
-	    new-w (draw-path w x y s dir tile)]
-	(recur new-w new-x new-y s (dec t))))))
+  ([world start-x start-y steps turns tile rand-dir]
+     (random-tile-steps world start-x start-y steps turns tile rand-dir nil))  
+  ([world start-x start-y steps turns tile rand-dir noop]
+     (loop [w world
+	    x start-x
+	    y start-y
+	    s steps
+	    t turns] 
+       (if (zero? t)
+	 w
+	 (let [dir (rand-dir)
+	       new-x (+ x (* steps (first dir)))
+	       new-y (+ y (* steps (second dir)))
+	       new-w (draw-path w x y s dir tile noop)]
+	   (recur new-w new-x new-y s (dec t)))))))
 
 (defn random-rook-tile-steps
   "Wraps random-tile-steps only allowing turns or changes in direction along the x and y axis" 
-  [world start-x start-y steps turns tile]
-  (let [rand-dir random-rook-dir] ;;; random-rook-dir may need to be in ()
-    (random-tile-steps world start-x start-y steps turns tile rand-dir)))
+  ([world start-x start-y steps turns tile]
+     (random-rook-tile-steps world start-x start-y steps turns tile nil))
+  ([world start-x start-y steps turns tile noop]
+     (let [rand-dir random-rook-dir] ;;; random-rook-dir may need to be in ()
+       (random-tile-steps world start-x start-y steps turns tile rand-dir noop))))
 
 (defn random-queen-tile-steps
   "Wraps random-tile-steps allowing turns or changes in any direction" 
-  [world start-x start-y steps turns tile]
-  (let [rand-dir random-queen-dir]
-    (random-tile-steps world start-x start-y steps turns tile rand-dir)))
+  ([world start-x start-y steps turns tile]
+     (random-queen-tile-steps world start-x start-y steps turns tile nil))
+  ([world start-x start-y steps turns tile noop]
+     (let [rand-dir random-queen-dir]
+       (random-tile-steps world start-x start-y steps turns tile rand-dir noop))))
 
 (defn- add-pool
   "Adds a pool of water to a world"
   [world]
   (let [e (get-floor-tile world)]
     (random-queen-tile-steps world (first e) (second e) 1 (+ 10 (rand-int 70)) :water)))
+
+;;; make this work 
+(defn- add-bare-cave-walls
+  [world]
+  (let [e (get-floor-tile world)]
+    (random-queen-tile-steps world (first e) (second e) 1 (+ 5 (rand-int 40)) :none :floor)))
 
 (defn- connect-room
   "Connects rooms with tunnels if floor tiles do not overlap"
@@ -208,7 +220,8 @@
   [max-x max-y]
   (add-pool 
    (add-pool
-    (gen-world-with-rooms max-x max-y))))
+    (add-bare-cave-walls 
+     (gen-world-with-rooms max-x max-y)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
@@ -226,7 +239,8 @@
       ;;; sprites
       :stairs-down ">"
       :stairs-up "<"
-      :player "@"})
+      :player "@"
+      :monster "*"})
 
 (defn- render-sprites
   "Draws sprites over the world map"
@@ -240,10 +254,15 @@
 	    y (second (second (first s)))]
 	(recur (assoc-in w [x y] tile) (rest s))))))
 
+(defn- render-player
+  "Draws sprites over the world map"
+  [w player]
+  (assoc-in w (player :position) :player))
+
 (defn draw-world 
   "Returns a string representation of the world with sprites"
-  [world sprites]
-  (apply str (for [row (render-sprites world sprites)] 
+  [world sprites player]
+  (apply str (for [row (render-player (render-sprites world sprites) player)] 
 	       (apply str (concat (for [token (doall row)] 
 				  (symbol-world token))
 				[\newline])))))

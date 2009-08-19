@@ -33,6 +33,7 @@
       <sysproperty key="clojure.compile.path" value="${build}"/>
       <arg value="joshhack.world"/>
       <arg value="joshhack.sprite"/>
+      <arg value="joshhack.player"/>
       <arg value="joshhack"/>
     </java>
   </target>
