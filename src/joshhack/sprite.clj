@@ -25,10 +25,7 @@
 (defn move-player
   "Changes the players location if the new location is legal"
   [player w x y]
-  (if (and (< 0 x) 
-	   (< 0 y)
-	   (> (count w) x)
-	   (> (count (first w)) y)
+  (if (and (world/position-in-world? w x y)
 	   (or (world/is-symbol? w y x :floor) (world/is-symbol? w y x :water)))
     [x y]
     player))

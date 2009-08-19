@@ -14,6 +14,14 @@
   [world y x tile]
   (= (nth (nth world x) y) tile))
 
+(defn position-in-world? 
+  "Checks if the x y is in bounds"
+  [w x y]
+  (and (< 0 x) 
+       (< 0 y)
+       (> (count w) x)
+       (> (count (first w)) y)))
+
 (defn get-floor-tile
   "Find a random floor tile"
   [world]
@@ -92,32 +100,44 @@
 (def directions [[1 0] [-1 0] [0 1] [0 -1]
 		 [1 1] [-1 1] [-1 -1] [1 -1]])
 
+(defn draw-path
+  [world start-x start-y steps dir tile]
+  (loop [w world
+	 x start-x
+	 y start-y
+	 s steps]
+    (let [new-x (+ x (first dir))
+	  new-y (+ y (second dir))]
+      (if (or (zero? s) (not (position-in-world? w new-x new-y)))
+	w
+	(recur (assoc-in w [new-x new-y] tile) new-x new-y (dec s))))))
+
 (defn random-tile-steps
+  [world start-x start-y steps turns tile rand-dir]
+  (loop [w world
+	 x start-x
+	 y start-y
+	 s steps
+	 t turns] 
+    (if (zero? t)
+      w
+      (let [dir (rand-dir)
+	    new-x (+ x (* steps (first dir)))
+	    new-y (+ y (* steps (second dir)))
+	    new-w (draw-path w x y s dir tile)]
+	(recur new-w new-x new-y s (dec t))))))
+
+(defn random-rook-tile-steps
   "Random change in position in the x or y direction takes a starting position and a magnitude" 
-  [w start-x start-y steps tile]
-  (let [dir (nth (directions) (rand-int 8))]
-    (loop [w world
-	   x start-x
-	   y start-y
-	   s steps] 
-      (if (zero? s)
-	points
-	(let [new-x (+ x (first dir))
-	      new-y (+ y (second dir))]
-	  (recur (assoc-in w (apply vector '(new-x new-y)) tile) new-x new-y (dec s)))))))
+  [world start-x start-y steps turns tile]
+  (let [rand-dir (fn [] (nth directions (rand-int 4)))]
+    (random-tile-steps world start-x start-y steps turns tile rand-dir)))
 
 (defn- add-pool
   "Adds a pool of water to a world"
   [world]
   (let [e (get-floor-tile world)]
-    (loop [w world 
-	   x (second e)
-	   y (first e)
-	   s (+ 10 (rand-int 12))]
-      (if (zero? s)
-	w
-	(let [new-tiles (random-rook-steps x y 2)]
-	  (recur (assoc-in w new-tiles :water) (first (last new-tiles)) (second (last new-tiles)) (dec s)))))))
+    (random-rook-tile-steps world (first e) (second e) 1 (+ 10 (rand-int 40)) :water)))
 
 ;(defn- connect-room
 ;  "Connects rooms with tunnels if floor tiles do not overlap"
