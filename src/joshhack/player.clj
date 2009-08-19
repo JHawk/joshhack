@@ -5,16 +5,14 @@
 ;;;; 
 ;;;; Player Generation
 
-(defn- set-position
-  "Adds an object, replaces an existing floor tile with type tile"
-  [world player]
-  (let [empty (world/get-floor-tile world)]
-    (assoc player :position empty)))
+(defstruct player :position)
 
+;;; TODO - make sure player doesn't gen ontop of npc 
 (defn gen-player
   "Creates player"
   [world]
-  (set-position world {}))
+  (struct player 
+	  (world/get-floor-tile world)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 

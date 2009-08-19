@@ -34,6 +34,7 @@
       <arg value="joshhack.world"/>
       <arg value="joshhack.sprite"/>
       <arg value="joshhack.player"/>
+      <arg value="joshhack.npc"/>
       <arg value="joshhack"/>
     </java>
   </target>

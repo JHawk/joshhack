@@ -5,7 +5,8 @@
 	   [java.awt.event KeyListener KeyEvent])
   (:require [joshhack.world :as world]
 	    [joshhack.sprite :as sprite]
-	    [joshhack.player :as player]))
+	    [joshhack.player :as player]
+	    [joshhack.npc :as npc]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
@@ -16,6 +17,7 @@
 
 (def world-state (ref (world/gen-world max-x max-y)))
 (def sprite-state (ref (sprite/gen-sprites @world-state)))
+(def npc-state (ref (npc/gen-random-npcs @world-state)))
 (def player-state (ref (player/gen-player @world-state)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -29,20 +31,26 @@
        (keyReleased [ke] nil)
        (keyTyped [ke]
 		 (dosync (let [position (@player-state :position) 
-;			       npcs ()
-;			       do-npc-turns (fn [] 
-;					      
-;					      (alter ))
+			       npcs ()
+			       do-npc-turns (fn []
+
+					      ;;;; NEXT TODO - this should be changed into a loop of the keys in @npc-state
+				      (alter npc-state assoc-in 
+					     :position (npc/move-non-player 
+							(@npc-state :position)
+							@world-state
+							x y)))
 			       move (fn [x y] 
 				      (alter player-state assoc 
 					     :position (player/move-player 
 							(@player-state :position)
 							@world-state
 							x y))
-;				      (do-npc-turns)
+				      (do-npc-turns)
 				      (. text-area (setText (world/draw-world 
 							     @world-state 
-							     @sprite-state 
+							     @sprite-state
+							     @npc-state
 							     @player-state))))
 			       x (first position)
 			       y (second position)
@@ -67,10 +75,11 @@
     (.add (doto (JPanel.)
 	    (.add (doto text-area
 		    (.setEditable false)
-		    (.setFont (Font. "Monospaced" (. Font PLAIN) 14 ))
+		    (.setFont (Font. "Monospaced" (. Font PLAIN) 12 ))
 		    (.setText (world/draw-world 
 			       @world-state 
 			       @sprite-state 
+			       @npc-state
 			       @player-state))
 		    (.addKeyListener (gen-keyboard-handler text-area))))))
     (.setResizable false)

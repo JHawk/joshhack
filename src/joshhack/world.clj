@@ -231,16 +231,21 @@
      {
 
       ;;; world 
-      :none "."
       :floor " "
+      :none "."
       :wall "#"
       :water "~"
 
       ;;; sprites
       :stairs-down ">"
       :stairs-up "<"
-      :player "@"
-      :monster "*"})
+      
+      ;;; npcs
+      :bandit "B"
+      :snake "S"
+      
+      ;;; player
+      :player "@"})
 
 (defn- render-sprites
   "Draws sprites over the world map"
@@ -254,15 +259,23 @@
 	    y (second (second (first s)))]
 	(recur (assoc-in w [x y] tile) (rest s))))))
 
-(defn- render-player
+(defn- render-npcs
+  [w npcs]
+  (loop [w world
+	 n npcs]
+    (if (empty? n)
+      w
+      (recur (assoc-in w (:position (first n)) (:tile (first n))) (rest n)))))
+
+(defn- render-character
   "Draws sprites over the world map"
-  [w player]
-  (assoc-in w (player :position) :player))
+  [w character]
+  (assoc-in w (character :position) (character :tile)))
 
 (defn draw-world 
   "Returns a string representation of the world with sprites"
   [world sprites player]
-  (apply str (for [row (render-player (render-sprites world sprites) player)] 
+  (apply str (for [row (render-character (render-npcs (render-sprites world sprites) npcs) player)] 
 	       (apply str (concat (for [token (doall row)] 
 				  (symbol-world token))
 				[\newline])))))
