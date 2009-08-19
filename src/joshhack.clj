@@ -10,7 +10,7 @@
 ;;;; 
 ;;;; World State
 
-(def max-x 50)
+(def max-x 100)
 (def max-y 50)
 
 (def world-state (ref (world/gen-world max-x max-y)))
