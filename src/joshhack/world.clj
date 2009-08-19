@@ -22,6 +22,20 @@
        (> (count w) x)
        (> (count (first w)) y)))
 
+(defn max-steps 
+  "Finds the max number of steps in the x or y direction that are in bounds"
+  [world dir pos]
+  (max (condp = dir
+	 [1 0] (- (count world) (first pos) 3)
+	 [0 1] (- (count (first world)) (second pos) 3)
+	 [-1 0] (- (first pos) 3)
+	 [0 -1] (- (second pos) 3))
+       0))
+
+(defn end-point
+  [start-x start-y mag dir]
+  [(+ start-x (* (first dir) mag)) (+ start-y (* (second dir) mag))])
+
 (defn get-floor-tile
   "Find a random floor tile"
   [world]
@@ -100,6 +114,10 @@
 (def directions [[1 0] [-1 0] [0 1] [0 -1]
 		 [1 1] [-1 1] [-1 -1] [1 -1]])
 
+(defn random-rook-dir [] (nth directions (rand-int 4)))
+
+(defn random-queen-dir [] (nth directions (rand-int 8)))
+
 (defn draw-path
   [world start-x start-y steps dir tile]
   (loop [w world
@@ -108,11 +126,20 @@
 	 s steps]
     (let [new-x (+ x (first dir))
 	  new-y (+ y (second dir))]
-      (if (or (zero? s) (not (position-in-world? w new-x new-y)))
+      (if (or (<= s 0) (not (position-in-world? w new-x new-y)))
 	w
 	(recur (assoc-in w [new-x new-y] tile) new-x new-y (dec s))))))
 
-(defn random-tile-steps
+;;; (and (position-in-world? w (first end-point) (second end-point))
+(defn draw-if-ends-on-floor
+  [w x y steps dir tile] 
+  (let [end-point (end-point x y steps dir)]
+    (if (is-symbol? w (second end-point) (first end-point) :floor)
+      (draw-path w x y steps dir tile)
+      w)))
+
+(defn- random-tile-steps
+  "Changes tiles from starting position takes number of steps, number of turns, a tile, and a means of finding a direction" 
   [world start-x start-y steps turns tile rand-dir]
   (loop [w world
 	 x start-x
@@ -128,33 +155,42 @@
 	(recur new-w new-x new-y s (dec t))))))
 
 (defn random-rook-tile-steps
-  "Random change in position in the x or y direction takes a starting position and a magnitude" 
+  "Wraps random-tile-steps only allowing turns or changes in direction along the x and y axis" 
   [world start-x start-y steps turns tile]
-  (let [rand-dir (fn [] (nth directions (rand-int 4)))]
+  (let [rand-dir random-rook-dir] ;;; random-rook-dir may need to be in ()
+    (random-tile-steps world start-x start-y steps turns tile rand-dir)))
+
+(defn random-queen-tile-steps
+  "Wraps random-tile-steps allowing turns or changes in any direction" 
+  [world start-x start-y steps turns tile]
+  (let [rand-dir random-queen-dir]
     (random-tile-steps world start-x start-y steps turns tile rand-dir)))
 
 (defn- add-pool
   "Adds a pool of water to a world"
   [world]
   (let [e (get-floor-tile world)]
-    (random-rook-tile-steps world (first e) (second e) 1 (+ 10 (rand-int 40)) :water)))
+    (random-queen-tile-steps world (first e) (second e) 1 (+ 10 (rand-int 40)) :water)))
 
-;(defn- connect-room
-;  "Connects rooms with tunnels if floor tiles do not overlap"
-;  [world]
-;  (if (only room or overlap)
-;    world 
-;    tunnel to floor tile not in this room))
+(defn- connect-room
+  "Connects rooms with tunnels if floor tiles do not overlap"
+  [world connection-attempts]
+  (loop [w world
+	 t connection-attempts]
+    (if (zero? t)
+      w
+      (let [e (get-floor-tile w)
+	    dir (random-rook-dir)] 
+	(recur (draw-if-ends-on-floor w (first e) (second e) (rand-int (max-steps w dir e)) dir :floor) (dec t))))))
 
-
- ;; add connect-room to recur when ready 
 (defn- gen-world-with-rooms 
   "Generates a world with rooms covering min-floor-coverage of the map"  
   [max-x max-y]
-  (loop [world (gen-empty-world max-x max-y)]
+  (loop [world (gen-empty-world max-x max-y)
+	 connection-attempts 0]
     (if (< min-floor-cover (tile-coverage world :floor))
       world
-      (recur (add-room world)))))
+      (recur (connect-room (add-room world) connection-attempts) (inc connection-attempts)))))
 
 (defn gen-world
   "Makes a world with random rooms and adds starting objects"
