@@ -260,7 +260,7 @@
 	(recur (assoc-in w [x y] tile) (rest s))))))
 
 (defn- render-npcs
-  [w npcs]
+  [world npcs]
   (loop [w world
 	 n npcs]
     (if (empty? n)
@@ -274,7 +274,7 @@
 
 (defn draw-world 
   "Returns a string representation of the world with sprites"
-  [world sprites player]
+  [world sprites player npcs]
   (apply str (for [row (render-character (render-npcs (render-sprites world sprites) npcs) player)] 
 	       (apply str (concat (for [token (doall row)] 
 				  (symbol-world token))

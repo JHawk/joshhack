@@ -19,11 +19,13 @@
 
 (defn gen-random-npcs
   [w]
-  (loop [npcs {}
+  (loop [npcs []
 	 n (+ 1 (rand-int 10))]
     (if (zero? n)
       npcs
-      (recur (assoc-in npcs (apply symbol n joshhack.npc) (gen-npc w (- rand-int (count tile-types) 1))) (dec n)))))
+      (recur (conj npcs (struct npc (world/get-floor-tile w) (nth tile-types (- (count tile-types) 1)))) (dec n)))))
+
+; gen-npc w (rand-int (count tile-types)))) (dec n)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 

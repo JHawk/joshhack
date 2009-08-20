@@ -38,8 +38,7 @@
 				      (alter npc-state assoc-in 
 					     :position (npc/move-non-player 
 							(@npc-state :position)
-							@world-state
-							x y)))
+							@world-state)))
 			       move (fn [x y] 
 				      (alter player-state assoc 
 					     :position (player/move-player 
