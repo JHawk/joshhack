@@ -8,7 +8,7 @@
 
 (defstruct npc :position :tile)
 
-(def tile-types [:bandit :snake])
+(def tile-types [:bandit :snake :zombie :squirrel])
 
 (defn gen-npc
   "Creates npc"
@@ -20,17 +20,18 @@
 (defn gen-random-npcs
   [w]
   (loop [npcs []
-	 n (+ 1 (rand-int 10))]
+	 n (+ 1 (rand-int (quot (* (world/world-size w) 0.008) 1)))]
     (if (zero? n)
       npcs
-      (recur (conj npcs (struct npc (world/get-floor-tile w) (nth tile-types (- (count tile-types) 1)))) (dec n)))))
+      (recur (conj npcs (gen-npc w (rand-int (count tile-types)))) (dec n)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
 ;;;; Non-Player Utils
 
 (defn move-non-player
-  "Changes the players location if the new location is legal"
+  "Changes the npcs location if the new location is legal - calls into player"
   [pos w]
   (let [dir (world/random-queen-dir)]
-    (player/move-player pos w (first dir) (second dir))))
+    (player/move-player pos w (+ (first pos) (first dir)) (+ (second pos) (second dir)))))
+

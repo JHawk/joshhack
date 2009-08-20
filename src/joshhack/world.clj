@@ -136,7 +136,6 @@
 			     tile)]
 	     (recur (assoc-in w [new-x new-y] this-tile) new-x new-y (dec s))))))))
 
-;;; (and (position-in-world? w (first end-point) (second end-point))
 (defn try-tunnel
   [w x y steps dir] 
   (let [end-point (end-point x y steps dir)]
@@ -187,13 +186,25 @@
   "Adds a pool of water to a world"
   [world]
   (let [e (get-floor-tile world)]
-    (random-queen-tile-steps world (first e) (second e) 1 (+ 10 (rand-int 70)) :water)))
+    (random-queen-tile-steps world (first e) (second e) 1 (+ 10 (rand-int 100)) :water)))
 
 ;;; make this work 
 (defn- add-bare-cave-walls
   [world]
   (let [e (get-floor-tile world)]
     (random-queen-tile-steps world (first e) (second e) 1 (+ 5 (rand-int 40)) :none :floor)))
+
+(defn- add-random-passage
+  [world]
+  (let [e (get-floor-tile world)]
+    (random-rook-tile-steps world (first e) (second e) (+ 1 (rand-int 8)) (rand-int 4) :floor :water)))
+
+(defn- direct-or-random-tunnel
+  [w e]
+  (if (< 1 (rand-int 50))
+    (add-random-passage w)
+    (let [dir (random-rook-dir)]
+      (try-tunnel w (first e) (second e) (rand-int (max-steps w dir e)) dir))))
 
 (defn- connect-room
   "Connects rooms with tunnels if floor tiles do not overlap"
@@ -215,13 +226,20 @@
       world
       (recur (connect-room (add-room world) connection-attempts) (inc connection-attempts)))))
 
+(def destruct-world
+     [add-bare-cave-walls add-pool add-random-passage])
+
 (defn gen-world
   "Makes a world with random rooms and adds starting objects"
   [max-x max-y]
-  (add-pool 
-   (add-pool
-    (add-bare-cave-walls 
-     (gen-world-with-rooms max-x max-y)))))
+  (let [world (gen-world-with-rooms max-x max-y)
+	x (+ 2 (rand-int (quot (max max-x max-y) 10)))]
+    (do (println x)
+	(loop [w world
+	       t x]
+	  (if (zero? t)
+	    w
+	    (recur ((nth destruct-world (rand-int (count destruct-world))) w) (dec t)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
@@ -232,7 +250,7 @@
 
       ;;; world 
       :floor " "
-      :none "."
+      :none ":"
       :wall "#"
       :water "~"
 
@@ -242,7 +260,9 @@
       
       ;;; npcs
       :bandit "B"
-      :snake "S"
+      :snake "s"
+      :zombie "Z"
+      :squirrel "?"
       
       ;;; player
       :player "@"})
@@ -270,16 +290,14 @@
 (defn- render-character
   "Draws sprites over the world map"
   [w character]
-  (assoc-in w (character :position) (:tile character)))
+  (let [pos (character :position)]
+    ;;; add view
+    (assoc-in w pos (:tile character))))
 
 (defn draw-world 
   "Returns a string representation of the world with sprites"
   [world sprites player npcs]
-  (do (println "**************")
-      (println player)
-      (println "------")
-      (println npcs)
-      (apply str (for [row (render-character (render-npcs (render-sprites world sprites) npcs) player)] 
-		   (apply str (concat (for [token (doall row)] 
-					(symbol-world token))
-				      [\newline]))))))
+  (apply str (for [row (render-character (render-npcs (render-sprites world sprites) npcs) player)] 
+	       (apply str (concat (for [token (doall row)] 
+				    (symbol-world token))
+				  [\newline])))))
