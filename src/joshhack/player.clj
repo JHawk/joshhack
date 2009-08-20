@@ -5,14 +5,15 @@
 ;;;; 
 ;;;; Player Generation
 
-(defstruct player :position)
+(defstruct player :position :tile)
 
 ;;; TODO - make sure player doesn't gen ontop of npc & col detection 
 (defn gen-player
   "Creates player"
   [world]
   (struct player 
-	  (world/get-floor-tile world)))
+	  (world/get-floor-tile world)
+	  :player))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 

@@ -32,25 +32,25 @@
        (keyTyped [ke]
 		 (dosync (let [position (@player-state :position) 
 			       npcs ()
-			       do-npc-turns (fn []
+;			       do-npc-turns (fn []
 
 					      ;;;; NEXT TODO - this should be changed into a loop of the keys in @npc-state
-				      (alter npc-state assoc-in 
-					     :position (npc/move-non-player 
-							(@npc-state :position)
-							@world-state)))
+;				      (alter npc-state assoc-in 
+;					     :position (npc/move-non-player 
+;							(@npc-state :position)
+;							@world-state)))
 			       move (fn [x y] 
 				      (alter player-state assoc 
 					     :position (player/move-player 
 							(@player-state :position)
 							@world-state
 							x y))
-				      (do-npc-turns)
+;				      (do-npc-turns)
 				      (. text-area (setText (world/draw-world 
 							     @world-state 
 							     @sprite-state
-							     @npc-state
-							     @player-state))))
+							     @player-state
+							     @npc-state))))
 			       x (first position)
 			       y (second position)
 			       c (. ke getKeyChar)]
@@ -78,8 +78,8 @@
 		    (.setText (world/draw-world 
 			       @world-state 
 			       @sprite-state 
-			       @npc-state
-			       @player-state))
+			       @player-state
+			       @npc-state))
 		    (.addKeyListener (gen-keyboard-handler text-area))))))
     (.setResizable false)
     (.setDefaultCloseOperation (. JFrame EXIT_ON_CLOSE))

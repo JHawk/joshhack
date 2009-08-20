@@ -71,7 +71,7 @@
 ;;;; 
 ;;;; World Generation
 
-(defn gen-empty-world 
+(defn- gen-empty-world 
   "Generates an empty world"
   [max-x max-y] 
   (apply vector (take max-y (repeat (apply vector (take max-x (repeat :none)))))))
@@ -95,7 +95,7 @@
 					   (nth (nth world i) j))))
 			 (nth world i)))))))
 
-(defn add-room
+(defn- add-room
   "Adds a room to a world"
   [world]
   (let [max-x (count (first world))
@@ -265,19 +265,21 @@
 	 n npcs]
     (if (empty? n)
       w
-      (recur (assoc-in w (:position (first n)) (:tile (second n))) (rest n)))))
+      (recur (assoc-in w (:position (first n)) (:tile (first n))) (rest n)))))
 
 (defn- render-character
   "Draws sprites over the world map"
   [w character]
-  (assoc-in w (character :position) (character :tile)))
+  (assoc-in w (character :position) (:tile character)))
 
 (defn draw-world 
   "Returns a string representation of the world with sprites"
   [world sprites player npcs]
-  (do 
-    (println npcs)
-    (apply str (for [row (render-character (render-npcs (render-sprites world sprites) npcs) player)] 
-		 (apply str (concat (for [token (doall row)] 
-				      (symbol-world token))
-				    [\newline]))))))
+  (do (println "**************")
+      (println player)
+      (println "------")
+      (println npcs)
+      (apply str (for [row (render-character (render-npcs (render-sprites world sprites) npcs) player)] 
+		   (apply str (concat (for [token (doall row)] 
+					(symbol-world token))
+				      [\newline]))))))
