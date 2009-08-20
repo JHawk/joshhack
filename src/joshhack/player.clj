@@ -7,7 +7,7 @@
 
 (defstruct player :position)
 
-;;; TODO - make sure player doesn't gen ontop of npc 
+;;; TODO - make sure player doesn't gen ontop of npc & col detection 
 (defn gen-player
   "Creates player"
   [world]

@@ -18,12 +18,19 @@
 	  (nth tile-types type)))
 
 (defn gen-random-npcs
-  [w]
-  (loop [npcs []
-	 n (+ 1 (rand-int 10))]
-    (if (zero? n)
-      npcs
-      (recur (conj npcs (struct npc (world/get-floor-tile w) (nth tile-types (- (count tile-types) 1)))) (dec n)))))
+  "Generates a vector of a random number of npcs"
+  [world]
+  (apply vector 
+	 (take (+ 1 (rand-int 10)) 
+	       (repeat (gen-npc world (rand-int (count tile-types)))))))
+
+;(defn gen-random-npcs
+;  [w]
+;  (loop [npcs []
+;	 n (+ 1 (rand-int 10))]
+;    (if (zero? n)
+;      npcs
+;      (recur (conj npcs (struct npc (world/get-floor-tile w) (nth tile-types (- (count tile-types) 1)))) (dec n)))))
 
 ; gen-npc w (rand-int (count tile-types)))) (dec n)))))
 
