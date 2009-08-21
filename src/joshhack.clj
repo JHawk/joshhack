@@ -37,18 +37,6 @@
 								(npc/move-non-player (:position npc) @world-state)))))
 
 			       position (@player-state :position)
-
-			       melee (fn [npc attack-pos]
-				       (do
-					 (println "here")
-					 (if 
-					     (= (npc :position) 
-						attack-pos)
-					   (npc assoc :hit-points
-						(npc/take-damage 
-						 (npc :hit-points) 
-						 (@player-state :attack))))))
-			       
 			       move (fn [x y]
 				      "move or melee"
 				      (let [new-pos (player/move-player 
@@ -60,24 +48,13 @@
 					  (println "******")
 					  (println position)
 					  (println new-pos)
-
-					;  (alter npc-state map 
-	;					 (if (= (npc :position) 
-		;					attack-pos)
-			;			   (npc assoc :hit-points
-				;			(npc/take-damage 
-					;		 (npc :hit-points) 
-						;	 (@player-state :attack)))) new-pos)
-
-				;	  (for [npc @npc-state]
-					;    (if (= (npc :position) new-pos)
-					 ;     (alter npc-state assoc :hit-points
-						;     (npc/take-damage 
-						 ;     (npc :hit-points) 
-						  ;    (@player-state :attack)))))
-
-					  (println @npc-state)
-					  (alter player-state assoc :position new-pos))))
+					 (if (empty? (for [npc @npc-state]
+						      (if (= (npc :position) new-pos)
+							(alter npc-state assoc :hit-points
+							       (npc/take-damage 
+								(npc :hit-points) 
+								(@player-state :attack))))))
+					   (alter player-state assoc :position new-pos)))))
 
 			       x (first position)
 			       y (second position)
