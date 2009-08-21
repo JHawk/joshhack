@@ -5,18 +5,21 @@
 ;;;; 
 ;;;; Sprites Generation
 
-(defn- add-sprite
+(defn- add-sprite-rand
   "Adds an object, replaces an existing floor tile with type tile"
-  [world tile sprites]
-  (let [empty (world/get-floor-tile world)]
-    (assoc sprites tile empty)))
+  ([world tile sprites]
+     (assoc sprites tile (world/get-floor-tile world))))
+
+(defn add-sprite-pos
+  "Adds an object, at a pos"
+  ([sprites tile pos]
+    (assoc sprites tile pos)))
 
 (defn gen-sprites
   "Adds starting sprites"
   [world]
-  (add-sprite world :stairs-down
-	      (add-sprite world :stairs-up 
-			  (add-sprite world :monster {}))))
+  (add-sprite-rand world :stairs-down
+	      (add-sprite-rand world :stairs-up {})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 

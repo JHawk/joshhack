@@ -30,12 +30,24 @@
        (keyPressed [ke] nil)
        (keyReleased [ke] nil)
        (keyTyped [ke]
-		 (dosync (let [do-npc-turns (fn [] 
+		 (dosync (let [make-dead (fn []
+					   (for [npc @npc-state]
+					     (if (>= 0 (:hit-points npc))
+					;TODO set a dead flag in npcs
+						;	(sprite/add-sprite-pos @sprite-state 
+							;		       :dead
+								;	       (:position npc)))
+							     ; (ref-set )))]
+					       nil)))
+
+			       do-npc-turns (fn [] 
 					      (ref-set npc-state 
 						       (for [npc @npc-state] 
-							 (assoc npc :position 
-								(npc/move-non-player (:position npc) @world-state)))))
-
+							 (if (:dead npc)
+							   npc
+							   (assoc npc :position 
+								  (npc/move-non-player (:position npc) @world-state))))))
+			       
 			       position (@player-state :position)
 			       move (fn [x y]
 				      "move or melee"
@@ -43,19 +55,16 @@
 						     position
 						     @world-state
 						     x y)]
-					
-					(do
-					  (println "******")
-					  (println position)
-					  (println new-pos)
-					 (if (empty? (for [npc @npc-state]
-						      (if (= (npc :position) new-pos)
-							(alter npc-state assoc :hit-points
-							       (npc/take-damage 
-								(npc :hit-points) 
-								(@player-state :attack))))))
-					   (alter player-state assoc :position new-pos)))))
-
+					  (if (= @npc-state 
+						 (ref-set npc-state 
+							  (for [npc @npc-state]
+							    (assoc npc :hit-points 
+								   (if (= (npc :position) new-pos)
+								     (npc/take-damage 
+								      (npc :hit-points) 
+								      (@player-state :attack))
+								     (:hit-points npc))))))
+					    (alter player-state assoc :position new-pos))))
 			       x (first position)
 			       y (second position)
 			       c (. ke getKeyChar)]
@@ -70,6 +79,7 @@
 			       \x (move (+ x 1) y)   
 			       \z (move (+ x 1) (- y 1))
 			       nil)
+			     (make-dead)
 			     (do-npc-turns)
 			     (. text-area (setText (world/draw-world 
 						    @world-state 
@@ -86,7 +96,7 @@
     (.add (doto (JPanel.)
 	    (.add (doto text-area
 		    (.setEditable false)
-		    (.setFont (Font. "Monospaced" (. Font PLAIN) 8))
+		    (.setFont (Font. "Monospaced" (. Font PLAIN) 10))
 		    (.setText (world/draw-world 
 			       @world-state 
 			       @sprite-state 

@@ -256,6 +256,7 @@
       ;;; sprites
       :stairs-down ">"
       :stairs-up "<"
+      :dead "-"
       
       ;;; npcs
       :bandit "B"
