@@ -35,13 +35,50 @@
 						       (for [npc @npc-state] 
 							 (assoc npc :position 
 								(npc/move-non-player (:position npc) @world-state)))))
+
 			       position (@player-state :position)
-			       move (fn [x y] 
-				      (alter player-state assoc 
-					     :position (player/move-player 
-							(@player-state :position)
-							@world-state
-							x y)))
+
+			       melee (fn [npc attack-pos]
+				       (do
+					 (println "here")
+					 (if 
+					     (= (npc :position) 
+						attack-pos)
+					   (npc assoc :hit-points
+						(npc/take-damage 
+						 (npc :hit-points) 
+						 (@player-state :attack))))))
+			       
+			       move (fn [x y]
+				      "move or melee"
+				      (let [new-pos (player/move-player 
+						     position
+						     @world-state
+						     x y)]
+					
+					(do
+					  (println "******")
+					  (println position)
+					  (println new-pos)
+
+					;  (alter npc-state map 
+	;					 (if (= (npc :position) 
+		;					attack-pos)
+			;			   (npc assoc :hit-points
+				;			(npc/take-damage 
+					;		 (npc :hit-points) 
+						;	 (@player-state :attack)))) new-pos)
+
+				;	  (for [npc @npc-state]
+					;    (if (= (npc :position) new-pos)
+					 ;     (alter npc-state assoc :hit-points
+						;     (npc/take-damage 
+						 ;     (npc :hit-points) 
+						  ;    (@player-state :attack)))))
+
+					  (println @npc-state)
+					  (alter player-state assoc :position new-pos))))
+
 			       x (first position)
 			       y (second position)
 			       c (. ke getKeyChar)]
@@ -68,11 +105,11 @@
 (let [frame (JFrame.)
       text-area (JTextArea. max-x max-y)]
   (doto frame
-    (.setSize (* 8 max-x) (+ 25 (* 18 max-y)))
+    (.setSize (* 8 40) (+ 25 (* 12 40))) ;;; TODO this is incorrect 
     (.add (doto (JPanel.)
 	    (.add (doto text-area
 		    (.setEditable false)
-		    (.setFont (Font. "Monospaced" (. Font PLAIN) 12 ))
+		    (.setFont (Font. "Monospaced" (. Font PLAIN) 8))
 		    (.setText (world/draw-world 
 			       @world-state 
 			       @sprite-state 

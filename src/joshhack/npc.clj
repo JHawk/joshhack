@@ -6,7 +6,7 @@
 ;;;; 
 ;;;; Non-Player Generation
 
-(defstruct npc :position :tile)
+(defstruct npc :position :tile :attack :hit-points)
 
 (def tile-types [:bandit :snake :zombie :squirrel])
 
@@ -15,7 +15,9 @@
   [world type]
   (struct npc 
 	  (world/get-floor-tile world)
-	  (nth tile-types type)))
+	  (nth tile-types type)
+	  5
+	  10))
 
 (defn gen-random-npcs
   [w]
@@ -28,6 +30,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
 ;;;; Non-Player Utils
+
+;;; TODO - make this more interesting 
+(defn take-damage
+  "Takes a number of hit-points and a number to dec and returns new number of hit-points"
+  [hp attack]
+  (- hp attack))
 
 (defn move-non-player
   "Changes the npcs location if the new location is legal - calls into player"

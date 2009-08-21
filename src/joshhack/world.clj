@@ -290,35 +290,25 @@
   "Draws sprites over the world map"
   [w character]
   (let [pos (character :position)]
-    (do
-      (println pos)
-      (println (quot (* (:vision character) 1.5) 1))
-     ; (println [(- (first pos) quot (* (:vision character) 1.5) 1) (- (second pos) quot (* (:vision character) 1.5) 1)])
-      (assoc-in w pos (:tile character)))))
+    (assoc-in w pos (:tile character))))
 
-(defn draw-world 
+(defn draw-world
   "Returns a string representation of the world with sprites"
-  [world sprites player npcs]
-  (let [pos (:position player)
-	x (first pos)
-	y (second pos)
-	half (quot (* (:vision player) 1.5) 1)
-	w (render-character 
-	   (render-npcs 
-	    (render-sprites world sprites) 
-	    npcs) 
+  [world sprites {[x y] :position vision :vision :as player} npcs]
+  (let [half (int (* vision 1.3))
+	w (render-character
+	   (render-npcs
+	    (render-sprites world sprites)
+	    npcs)
 	   player)]
     (apply str
-	   (for [row (range (- y half) (+ y half))]
-	     (apply str 
-		    (concat (for [token (range (- x half) (+ x half))]
-			      (do (print row)
-				  (print " ")
-				  (println token)
-				  (if (or (< row 0) 
-					  (< token 0) 
-					  (> row (- (count w) 1)) 
-					  (> token (- (count (first w)) 1)))
-				    (symbol-world :none)
-				    (symbol-world (nth (nth w row) token)))))
+	   (for [row (range (- x half) (+ x half))]
+	     (apply str
+		    (concat (for [token (range (- y half) (+ y half))]
+			      (if (or (< row 0)
+				      (< token 0)
+				      (> row (- (count w) 1))
+				      (> token (- (count (first w)) 1)))
+				(symbol-world :none)
+				(symbol-world ((w row) token))))
 			    [\newline]))))))
