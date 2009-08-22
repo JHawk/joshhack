@@ -297,16 +297,16 @@
 (defn draw-world
   "Returns a string representation of the world with sprites"
   [world sprites {[x y] :position vision :vision :as player} npcs]
-  (let [half (int (* vision 1.3))
+  (let [size (int (* vision 1.5))
 	w (render-character
 	   (render-npcs
 	    (render-sprites world sprites)
 	    npcs)
 	   player)]
     (apply str
-	   (for [row (range (- x half) (+ x half))]
+	   (for [row (range (- x size) (+ x size))]
 	     (apply str
-		    (concat (for [token (range (- y half) (+ y half))]
+		    (concat (for [token (range (- y size) (+ y size))]
 			      (if (or (< row 0)
 				      (< token 0)
 				      (> row (- (count w) 1))

@@ -6,7 +6,7 @@
 ;;;; 
 ;;;; Non-Player Generation
 
-(defstruct npc :position :tile :attack :hit-points :dead)
+(defstruct npc :position :tile :attack :hit-points :vision :dead)
 
 (def tile-types [:bandit :snake :zombie :squirrel])
 
@@ -17,6 +17,7 @@
 	  (world/get-floor-tile world)
 	  (nth tile-types type)
 	  5
+	  10
 	  10
 	  false))
 
