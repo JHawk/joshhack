@@ -281,27 +281,32 @@
 	(recur (assoc-in w [x y] tile) (rest s))))))
 
 (defn- render-npcs
-  [world npcs]
-  (loop [w world
-	 n npcs]
-    (if (empty? n)
-      w
-      (recur (assoc-in w (:position (first n)) (:tile (first n))) (rest n)))))
+  [world npcs vision x y]
+  (let [los (for [v (range (- x vision) (+ x vision))]
+	      (for [h (range (- y vision) (+ y vision))]
+		[v h]))]
+    (loop [w world
+	   n npcs]
+      (if (empty? n)
+	w
+	(let [new-w (if (filter (= (:position n)) los)
+		      (assoc-in w (:position (first n)) (:tile (first n)))
+		      w)]
+	(recur new-w (rest n)))))))
 
-(defn- render-character
+(defn- render-player
   "Draws sprites over the world map"
-  [w character]
-  (let [pos (character :position)]
-    (assoc-in w pos (:tile character))))
+  [w player]
+  (assoc-in w (:position player) (:tile player)))
 
 (defn draw-world
   "Returns a string representation of the world with sprites"
   [world sprites {[x y] :position vision :vision :as player} npcs]
   (let [size (int (* vision 1.5))
-	w (render-character
+	w (render-player
 	   (render-npcs
 	    (render-sprites world sprites)
-	    npcs)
+	    npcs vision x y)
 	   player)]
     (apply str
 	   (for [row (range (- x size) (+ x size))]

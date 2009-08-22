@@ -12,8 +12,8 @@
 ;;;; 
 ;;;; World State
 
-(def max-x 20)
-(def max-y 20)
+(def max-x 30)
+(def max-y 30)
 
 (def world-state (ref (world/gen-world max-x max-y)))
 (def sprite-state (ref (sprite/gen-sprites @world-state)))
