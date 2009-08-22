@@ -256,13 +256,14 @@
       ;;; sprites
       :stairs-down ">"
       :stairs-up "<"
-      :dead "-"
       
       ;;; npcs
       :bandit "B"
       :snake "s"
       :zombie "Z"
       :squirrel "?"
+
+      :dead "-"
       
       ;;; player
       :player "@"})

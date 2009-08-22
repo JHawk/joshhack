@@ -6,7 +6,7 @@
 ;;;; 
 ;;;; Non-Player Generation
 
-(defstruct npc :position :tile :attack :hit-points)
+(defstruct npc :position :tile :attack :hit-points :dead)
 
 (def tile-types [:bandit :snake :zombie :squirrel])
 
@@ -17,7 +17,8 @@
 	  (world/get-floor-tile world)
 	  (nth tile-types type)
 	  5
-	  10))
+	  10
+	  false))
 
 (defn gen-random-npcs
   [w]

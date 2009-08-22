@@ -31,14 +31,18 @@
        (keyReleased [ke] nil)
        (keyTyped [ke]
 		 (dosync (let [make-dead (fn []
-					   (for [npc @npc-state]
-					     (if (>= 0 (:hit-points npc))
-					;TODO set a dead flag in npcs
-						;	(sprite/add-sprite-pos @sprite-state 
-							;		       :dead
-								;	       (:position npc)))
-							     ; (ref-set )))]
-					       nil)))
+					   (do (ref-set npc-state
+							(for [npc @npc-state]
+							  (assoc npc :dead 
+								 (if (>= 0 (:hit-points npc))
+								   true
+								   false))))
+					       (ref-set npc-state
+							(for [npc @npc-state]
+							  (assoc npc :tile
+								 (if (>= 0 (:hit-points npc))
+								   :dead
+								   (:tile npc)))))))
 
 			       do-npc-turns (fn [] 
 					      (ref-set npc-state 
