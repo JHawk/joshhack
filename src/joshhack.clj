@@ -63,7 +63,7 @@
 						 (ref-set npc-state 
 							  (for [npc @npc-state]
 							    (assoc npc :hit-points 
-								   (if (= (npc :position) new-pos)
+								   (if (and (= (npc :position) new-pos) (not (npc :dead)))
 								     (npc/take-damage 
 								      (npc :hit-points) 
 								      (@player-state :attack))
