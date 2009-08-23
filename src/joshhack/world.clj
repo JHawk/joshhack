@@ -186,7 +186,11 @@
   "Adds a pool of water to a world"
   [world]
   (let [e (get-floor-tile world)]
-    (random-queen-tile-steps world (first e) (second e) 1 (+ 10 (rand-int 100)) :water)))
+    (random-queen-tile-steps world 
+			     (first e) 
+			     (second e) 
+			     1 
+			     (+ 10 (rand-int 100)) :water)))
 
 ;;; make this work 
 (defn- add-bare-cave-walls
@@ -204,7 +208,10 @@
   (if (< 1 (rand-int 50))
     (add-random-passage w)
     (let [dir (random-rook-dir)]
-      (try-tunnel w (first e) (second e) (rand-int (max-steps w dir e)) dir))))
+      (try-tunnel w 
+		  (first e) 
+		  (second e) 
+		  (rand-int (max-steps w dir e)) dir))))
 
 (defn- connect-room
   "Connects rooms with tunnels if floor tiles do not overlap"
@@ -215,7 +222,11 @@
       w
       (let [e (get-floor-tile w)
 	    dir (random-rook-dir)] 
-	(recur (try-tunnel w (first e) (second e) (rand-int (max-steps w dir e)) dir) (dec t))))))
+	(recur (try-tunnel w 
+			   (first e) 
+			   (second e) 
+			   (rand-int (max-steps w dir e)) dir) 
+	       (dec t))))))
 
 (defn- gen-world-with-rooms 
   "Generates a world with rooms covering min-floor-coverage of the map"  
@@ -224,7 +235,8 @@
 	 connection-attempts 0]
     (if (< min-floor-cover (tile-coverage world :floor))
       world
-      (recur (connect-room (add-room world) connection-attempts) (inc connection-attempts)))))
+      (recur (connect-room (add-room world) connection-attempts) 
+	     (inc connection-attempts)))))
 
 (def destruct-world
      [add-bare-cave-walls add-pool add-random-passage])
@@ -299,6 +311,8 @@
   [w player]
   (assoc-in w (:position player) (:tile player)))
 
+
+;; TODO This draws the world at a 90 degree angle!!!
 (defn draw-world
   "Returns a string representation of the world with sprites"
   [world sprites {[x y] :position vision :vision :as player} npcs]
