@@ -55,10 +55,8 @@
   (ref-set npc-state (npc/do-npc-turns npcs @world-state)))
 
 (defn- draw
-  ([]
-     (draw nil))
-  ([_]
-     (world/draw-world @world-state @sprite-state @player-state @npc-state)))
+  ([] (draw nil))
+  ([_] (world/draw-world @world-state @sprite-state @player-state @npc-state)))
 
 (defn- do-turn 
   [dir]
