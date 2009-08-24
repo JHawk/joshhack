@@ -12,8 +12,8 @@
 ;;;; 
 ;;;; World State
 
-(def max-x 30)
-(def max-y 30)
+(def max-x 20)
+(def max-y 20)
 
 (def world-state (ref (world/gen-world max-x max-y)))
 (def sprite-state (ref (sprite/gen-sprites @world-state)))
@@ -24,73 +24,47 @@
 ;;;;
 ;;;; Game Loop 
 
-(def compass {:north [0, -1]
-	      :south [0, 1]
-	      :east [1, 0]
-	      :west [-1, 0]
-	      :northeast [1, -1]
-	      :northwest [-1, -1]
-	      :southeast [1, 1]
-	      :southwest [-1, 1]})
+(def compass {:north [0 -1]
+	      :south [0 1]
+	      :east [1 0]
+	      :west [-1 0]
+	      :northeast [1 -1]
+	      :northwest [-1 -1]
+	      :southeast [1 1]
+	      :southwest [-1 1]})
 
-;; TODO most of this logic needs to go in player - the things that should remain here are the 'glue'
-;; that ties together calls to npc and player
-(defn move 
+(defn- move
   [dir]
-  (let [position (@player-state :position)
-	x (+ (first position) (first (compass dir)))
-	y (+ (second position) (second (compass dir)))
-	new-pos (player/move-player 
-		 position
-		 @world-state
-		 x y)]
-    (if (= @npc-state 
-	   (ref-set npc-state 
-		    (for [npc @npc-state]
-		      (assoc npc :hit-points 
-			     (if (and (= (npc :position) new-pos) (not (npc :dead)))
-			       (npc/take-damage 
-				(npc :hit-points) 
-				(@player-state :attack))
-			       (:hit-points npc))))))
-      (alter player-state assoc :position new-pos))))
+  (let [new-pos 
+	(player/get-new-pos 
+	 (:position @player-state) 
+	 @world-state 
+	 (dir compass))]
+    (if (not (npc/some-npc-defending? new-pos @npc-state))
+      (alter player-state assoc :position new-pos)
+      new-pos)))
+    
+(defn- melee 
+  [new-pos]
+  (if (= clojure.lang.LazilyPersistentVector (class new-pos))
+    (ref-set npc-state (npc/receive-attack (:attack @player-state) new-pos @npc-state))
+    @npc-state))
 
-;; TODO refactor this down to just the game-loop steps
+(defn- npc-turns
+  [npcs]
+  (ref-set npc-state (npc/do-npc-turns npcs @world-state)))
+
+(defn- draw
+  ([]
+     (draw nil))
+  ([_]
+     (world/draw-world @world-state @sprite-state @player-state @npc-state)))
+
 (defn- do-turn 
   [dir]
-  (dosync (let [make-dead (fn [] ;; TODO refactor me to npcs
-			    (do (ref-set npc-state
-					 (for [npc @npc-state]
-					   (assoc npc :dead 
-						  (if (>= 0 (:hit-points npc))
-						    true
-						    false))))
-				(ref-set npc-state
-					 (for [npc @npc-state]
-					   (assoc npc :tile
-						  (if (>= 0 (:hit-points npc))
-						    :dead
-						    (:tile npc)))))))
-
-		do-npc-turns (fn [] ;; TODO refactor me to npcs
-			       (ref-set npc-state 
-					(for [npc @npc-state] 
-					  (if (:dead npc)
-					    npc
-					    (assoc npc :position 
-						   (npc/move-non-player (:position npc) @world-state))))))
-		
-		position (@player-state :position)
-		x (first position)
-		y (second position)]
-	    (do ;; TODO remove this do, make state threaded
-	      (move dir)
-	      (make-dead)
-	      (do-npc-turns)
-	      (world/draw-world @world-state 
-				@sprite-state
-				@player-state
-				@npc-state)))))
+  (if dir
+    (dosync (-> dir move melee npc-turns draw))
+    (draw)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -124,11 +98,7 @@
 	      (.add (doto text-area
 		      (.setEditable false)
 		      (.setFont (Font. "Monospaced" (. Font PLAIN) 10))
-		      (.setText (world/draw-world 
-				 @world-state 
-				 @sprite-state 
-				 @player-state
-				 @npc-state))
+		      (.setText (draw))
 		      (.addKeyListener (gen-keyboard-handler text-area))))))
       (.setResizable false)
       (.setDefaultCloseOperation (. JFrame EXIT_ON_CLOSE))

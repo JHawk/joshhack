@@ -22,10 +22,17 @@
 ;;;; 
 ;;;; Player Utils
 
-(defn move-player
-  "Changes the players location if the new location is legal"
-  [pos w x y]
-  (if (and (world/position-in-world? w x y)
-	   (or (world/is-symbol? w y x :floor) (world/is-symbol? w y x :water)))
-    [x y]
-    pos))
+(defn- occupiable?
+  "Checks if the new location is legal"
+  [w x y]
+  (and (world/position-in-world? w x y)
+       (or (world/is-symbol? w x y :floor) 
+	   (world/is-symbol? w x y :water))))
+
+(defn get-new-pos
+  [pos w dir]
+  (let [new-x (+ (first pos) (first dir))
+	new-y (+ (second pos) (second dir))]
+    (if (occupiable? w new-x new-y)
+      [new-x new-y]
+      pos)))

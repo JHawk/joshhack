@@ -11,16 +11,16 @@
 
 (defn is-symbol?
   "Return true if x y is a tile"
-  [world y x tile]
-  (= (nth (nth world x) y) tile))
+  [world x y tile]
+  (= (nth (nth world y) x) tile))
 
 (defn position-in-world? 
   "Checks if the x y is in bounds"
   [w x y]
   (and (< 0 x) 
        (< 0 y)
-       (> (- (count w) 1) x)
-       (> (- (count (first w)) 1) y)))
+       (> (- (count w) 1) y)
+       (> (- (count (first w)) 1) x)))
 
 (defn max-steps 
   "Finds the max number of steps in the x or y direction that are in bounds"
@@ -42,14 +42,13 @@
   (let [guess-x (rand-int (- (count (first world)) 1))
 	guess-y (rand-int (- (count world) 1))]
     (if (is-symbol? world guess-x guess-y :floor)
-      (vector guess-y guess-x)
+      (vector guess-x guess-y)
       (get-floor-tile world))))
 
 (defn- add-object
   "Adds an object, replaces an existing floor tile with type tile"
   [world tile]
-  (let [empty (get-floor-tile world)]
-    (assoc-in world empty tile)))
+  (assoc-in world (get-floor-tile world) tile))
 
 (defn world-size
   "Returns the area of the world"
@@ -59,8 +58,7 @@
 (defn total-tiles
   "Returns the total number of tiles in world of tile type"
   [world tile]
-  (let [is-tile? (fn [x] (= x tile))]
-    (count-if is-tile? (apply concat world))))
+  (count-if (fn [x] (= x tile)) (apply concat world)))
 
 (defn tile-coverage
   "Divides the number of tile by total area and returns decimal"
@@ -131,7 +129,7 @@
 	 (if (or (<= s 0) (not (position-in-world? w new-x new-y)))
 	   w
 	   (let [this-tile (if (and (not (nil? noop)) 
-				    (is-symbol? w new-y new-x noop)) 
+				    (is-symbol? w new-x new-y noop)) 
 			     noop
 			     tile)]
 	     (recur (assoc-in w [new-x new-y] this-tile) new-x new-y (dec s))))))))
@@ -139,7 +137,7 @@
 (defn try-tunnel
   [w x y steps dir] 
   (let [end-point (end-point x y steps dir)]
-    (if (is-symbol? w (second end-point) (first end-point) :floor)
+    (if (is-symbol? w (first end-point) (second end-point) :floor)
       (draw-path 
        (draw-path 
 	(draw-path w x y steps dir :floor) 
@@ -203,6 +201,7 @@
   (let [e (get-floor-tile world)]
     (random-rook-tile-steps world (first e) (second e) (+ 1 (rand-int 8)) (rand-int 4) :floor :water)))
 
+;;; broken 
 (defn- direct-or-random-tunnel
   [w e]
   (if (< 1 (rand-int 50))
@@ -275,7 +274,7 @@
       :zombie "Z"
       :squirrel "?"
 
-      :dead "-"
+      :dead-body "-"
       
       ;;; player
       :player "@"})
@@ -294,17 +293,12 @@
 
 (defn- render-npcs
   [world npcs vision x y]
-  (let [los (for [v (range (- x vision) (+ x vision))]
-	      (for [h (range (- y vision) (+ y vision))]
-		[v h]))]
-    (loop [w world
-	   n npcs]
-      (if (empty? n)
-	w
-	(let [new-w (if (filter (= (:position n)) los)
-		      (assoc-in w (:position (first n)) (:tile (first n)))
-		      w)]
-	(recur new-w (rest n)))))))
+  (loop [w world
+	 n npcs]
+    (if (empty? n)
+      w
+      (let [new-w (assoc-in w (:position (first n)) (:tile (first n)))]
+	(recur new-w (rest n))))))
 
 (defn- render-player
   "Draws sprites over the world map"
@@ -323,9 +317,9 @@
 	    npcs vision x y)
 	   player)]
     (apply str
-	   (for [row (range (- x size) (+ x size))]
+	   (for [row (range (- y size) (+ y size))]
 	     (apply str
-		    (concat (for [token (range (- y size) (+ y size))]
+		    (concat (for [token (range (- x size) (+ x size))]
 			      (if (or (< row 0)
 				      (< token 0)
 				      (> row (- (count w) 1))

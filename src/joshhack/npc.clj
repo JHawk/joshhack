@@ -33,15 +33,39 @@
 ;;;; 
 ;;;; Non-Player Utils
 
-;;; TODO - make this more interesting 
-(defn take-damage
-  "Takes a number of hit-points and a number to dec and returns new number of hit-points"
-  [hp attack]
-  (- hp attack))
+(defn attacked?
+  [{pos :position dead :dead :as npc} pos-attacked] 
+  (and (= pos pos-attacked) (not dead)))
+
+(defn some-npc-defending?
+  [pos-attacked npcs]
+  (some (fn [npc] (attacked? npc pos-attacked)) npcs))
+
+(defn receive-attack
+  [attack pos-attacked npcs]
+  (for [{hp :hit-points :as npc} npcs] 
+    (if (attacked? npc pos-attacked)
+      (assoc npc :hit-points (- hp attack))
+      npc)))
+
+(defn make-dead 
+  [npc] 
+  (assoc npc :dead true :tile :dead-body))
 
 (defn move-non-player
   "Changes the npcs location if the new location is legal - calls into player"
   [pos w]
-  (let [dir (world/random-queen-dir)]
-    (player/move-player pos w (+ (first pos) (first dir)) (+ (second pos) (second dir)))))
+  (player/get-new-pos pos w (world/random-queen-dir)))
+
+(defn do-npc-turns
+  [npcs w]  
+  (for [npc npcs] 
+    (if (>= 0 (:hit-points npc))
+      (make-dead npcs)
+      (assoc npc :position 
+	     (move-non-player 
+	      (npc :position) 
+	      w)))))
+
+
 
