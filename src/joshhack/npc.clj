@@ -6,7 +6,7 @@
 ;;;; 
 ;;;; Non-Player Generation
 
-(defstruct npc :position :tile :attack :hit-points :vision :dead)
+(defstruct npc :position :tile :attack :hit-points :vision :last-action :dead)
 
 (def tile-types [:bandit :snake :zombie :squirrel])
 
@@ -19,6 +19,7 @@
 	  5
 	  10
 	  10
+	  :none
 	  false))
 
 (defn gen-random-npcs
@@ -32,6 +33,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
 ;;;; Non-Player Utils
+
+; check tile to see 
+; if it is of type :floor :water
+; + direction map such as compass to that tile and get a seq of vectors 
+; if the new vectors are of :floor :water 
+; - add the same compass key to them until los exhausted or tile excludes 
+
+(defn melee-range
+  [{pos :position :as npc} dir-map]
+  (for [key (keys dir-map)] 
+    [(+ (first (key dir-map)) (first pos)) 
+     (+ (second (key dir-map)) (second pos))]))
 
 (defn attacked?
   [{pos :position dead :dead :as npc} pos-attacked] 
@@ -52,20 +65,24 @@
   [npc] 
   (assoc npc :dead true :tile :dead-body))
 
-(defn move-non-player
-  "Changes the npcs location if the new location is legal - calls into player"
-  [pos w]
-  (player/get-new-pos pos w (world/random-queen-dir)))
+(defn move
+  [dir npc world player]
+  (let [new-pos
+	(player/get-new-pos
+	 (:position npc)
+	 world
+	 dir)]
+    (if (not (= (:postion player) new-pos))
+      (assoc npc :position new-pos :last-action :moved)
+      (assoc npc :last-action :none))))
 
-(defn do-npc-turns
-  [npcs w]  
+(defn move-npcs
+  [npcs w p]  
   (for [npc npcs] 
     (if (>= 0 (:hit-points npc))
       (make-dead npc)
-      (assoc npc :position 
-	     (move-non-player 
-	      (npc :position) 
-	      w)))))
+      (let [dir (world/random-queen-dir)]
+	(move dir npc w p)))))
 
 
 

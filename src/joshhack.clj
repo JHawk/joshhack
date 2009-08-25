@@ -12,8 +12,8 @@
 ;;;; 
 ;;;; World State
 
-(def max-x 20)
-(def max-y 20)
+(def max-x 15)
+(def max-y 30)
 
 (def world-state (ref (world/gen-world max-x max-y)))
 (def sprite-state (ref (sprite/gen-sprites @world-state)))
@@ -33,7 +33,7 @@
 	      :southeast [1 1]
 	      :southwest [-1 1]})
 
-(defn- move
+(defn- move-player
   [dir]
   (let [new-pos 
 	(player/get-new-pos 
@@ -44,15 +44,36 @@
       (alter player-state assoc :position new-pos)
       new-pos)))
     
-(defn- melee 
+(defn- melee-player 
   [new-pos]
   (if (= clojure.lang.LazilyPersistentVector (class new-pos))
     (ref-set npc-state (npc/receive-attack (:attack @player-state) new-pos @npc-state))
     @npc-state))
 
-(defn- npc-turns
+(defn- melee-npc
   [npcs]
-  (ref-set npc-state (npc/do-npc-turns npcs @world-state)))
+  (do
+    (println "*****")
+    (println (count npcs))
+    (println "player")
+    (println @player-state)
+    (println "npcs") 
+    (for [{pos :position dead :dead la :last-action attack :attack :as npc} 
+	  npcs]
+      (let [attacks (if (and (not dead)
+			     (= la :none)
+			     (some (fn [x] (= (:position @player-state) x)) (npc/melee-range npc compass)))
+		      (do (println "hit")
+			  (alter player-state assoc :hit-points (- (:hit-points @player-state) attack))
+			  (println @player-state)))]
+	(do (println npc)
+	    (if attacks
+	      (assoc npc :last-action :attacked)
+	      npc))))))
+
+(defn- move-npc
+  [npcs]
+  (ref-set npc-state (npc/move-npcs npcs @world-state @player-state)))
 
 (defn- draw
   ([] (draw nil))
@@ -61,7 +82,12 @@
 (defn- do-turn 
   [dir]
   (if dir
-    (dosync (-> dir move melee npc-turns draw))
+    (dosync (-> dir 
+		move-player 
+		melee-player 
+		melee-npc
+		move-npc
+		draw))
     (draw)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

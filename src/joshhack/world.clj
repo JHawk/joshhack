@@ -9,6 +9,23 @@
 
 (def count-if (comp count filter))
 
+(defn world-max-x 
+  [w]
+  (- (count (first w)) 1))
+
+(defn world-max-y 
+  [w]
+  (- (count w) 1))
+
+(defn world-max-vector
+  [w]
+  [(world-max-x w)
+   (world-max-y w)])
+
+(defn reverse-for-assoc-in
+  [v]
+  [(second v) (first v)])
+
 (defn is-symbol?
   "Return true if x y is a tile"
   [world x y tile]
@@ -19,17 +36,17 @@
   [w x y]
   (and (< 0 x) 
        (< 0 y)
-       (> (- (count w) 1) y)
-       (> (- (count (first w)) 1) x)))
+       (> (world-max-x w) x)
+       (> (world-max-y w) y)))
 
 (defn max-steps 
   "Finds the max number of steps in the x or y direction that are in bounds"
-  [world dir pos]
+  [w dir pos]
   (max (condp = dir
-	 [1 0] (- (count world) (first pos) 3)
-	 [0 1] (- (count (first world)) (second pos) 3)
-	 [-1 0] (- (first pos) 3)
-	 [0 -1] (- (second pos) 3))
+	 [0 -1] (- (second pos) 1)
+	 [0 1] (- (world-max-y w) (second pos) 1)
+	 [1 0] (- (world-max-x w) (first pos) 1)
+	 [-1 0] (- (first pos) 1))
        0))
 
 (defn end-point
@@ -48,7 +65,7 @@
 (defn- add-object
   "Adds an object, replaces an existing floor tile with type tile"
   [world tile]
-  (assoc-in world (get-floor-tile world) tile))
+  (assoc-in world (reverse-for-assoc-in (get-floor-tile world)) tile))
 
 (defn world-size
   "Returns the area of the world"
@@ -132,7 +149,7 @@
 				    (is-symbol? w new-x new-y noop)) 
 			     noop
 			     tile)]
-	     (recur (assoc-in w [new-x new-y] this-tile) new-x new-y (dec s))))))))
+	     (recur (assoc-in w [new-y new-x] this-tile) new-x new-y (dec s))))))))
 
 (defn try-tunnel
   [w x y steps dir] 
@@ -289,7 +306,7 @@
       (let [tile (first (first s))
 	    x (first (second (first s)))
 	    y (second (second (first s)))]
-	(recur (assoc-in w [x y] tile) (rest s))))))
+	(recur (assoc-in w [y x] tile) (rest s))))))
 
 (defn- render-npcs
   [world npcs vision x y]
@@ -297,13 +314,15 @@
 	 n npcs]
     (if (empty? n)
       w
-      (let [new-w (assoc-in w (:position (first n)) (:tile (first n)))]
-	(recur new-w (rest n))))))
+      (recur (assoc-in w 
+		       (reverse-for-assoc-in (:position (first n))) 
+		       (:tile (first n))) 
+	     (rest n)))))
 
 (defn- render-player
   "Draws sprites over the world map"
   [w player]
-  (assoc-in w (:position player) (:tile player)))
+  (assoc-in w (reverse-for-assoc-in (:position player)) (:tile player)))
 
 
 ;; TODO This draws the world at a 90 degree angle!!!
@@ -327,3 +346,14 @@
 				(symbol-world :none)
 				(symbol-world ((w row) token))))
 			    [\newline]))))))
+
+
+
+
+;;;; testing - fixing x y 
+;    (apply str (for [row w] 
+	;	 (apply str (concat (for [token (doall row)] 
+		;		      (symbol-world token))
+			;	    [\newline]))))))   
+
+
