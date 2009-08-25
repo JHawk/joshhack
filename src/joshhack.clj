@@ -56,9 +56,16 @@
 	npcs]
     (let [attacks (if (and (not dead)
 			   (some (fn [x] (= (:position @player-state) x)) (npc/melee-range npc compass)))
-		    (do (println "hit")
-			(alter player-state assoc :hit-points (- (:hit-points @player-state) attack))
-			(println @player-state)))]
+		    (do (alter player-state assoc :hit-points (- (:hit-points @player-state) attack))
+		      
+			(println "hit")
+			(println "NPC")
+			(println npc)
+			(println "player")
+			(println @player-state)
+			(println "*****")
+			
+			))]
 	  (if attacks
 	    (assoc npc :last-action :attacked)
 	    npc))))
@@ -66,6 +73,10 @@
 (defn- move-npc
   [npcs]
   (ref-set npc-state (npc/move-npcs npcs @world-state @player-state)))
+
+(defn- check-end-game
+  [_]
+  )
 
 (defn- draw
   ([] (draw nil))
@@ -79,6 +90,7 @@
 		melee-player 
 		melee-npc
 		move-npc
+		check-end-game
 		draw))
     (draw)))
 

@@ -6,13 +6,15 @@
 ;;;; 
 ;;;; Non-Player Generation
 
-(defstruct npc :attack :hit-points :vision :position :tile :destination :last-action :dead)
+(defstruct npc :attack :hit-points :vision :position :tile :mood :destination :last-action :dead)
 
 (def tile-types [:bandit :snake :zombie :squirrel])
 
+(def mood-types [:hostile :neutral :friendly :asleep])
+
 (defn gen-npc
   "Creates npc"
-  [world type]
+  [world type mood]
   (struct npc
 	  
 	  ;;; stats
@@ -23,6 +25,7 @@
 	  ;;; state
 	  (world/get-floor-tile world)
 	  (nth tile-types type)
+	  (nth mood-types type)
 	  :none ; destination
 	  :none ; last action 
 	  false ; dead flag
@@ -34,7 +37,7 @@
 	 n (+ 1 (rand-int (quot (* (world/world-size w) 0.008) 1)))]
     (if (zero? n)
       npcs
-      (recur (conj npcs (gen-npc w (rand-int (count tile-types)))) (dec n)))))
+      (recur (conj npcs (gen-npc w (rand-int (count tile-types)) (rand-int (count mood-types)))) (dec n)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 
