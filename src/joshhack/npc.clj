@@ -61,7 +61,7 @@
   [npcs w]  
   (for [npc npcs] 
     (if (>= 0 (:hit-points npc))
-      (make-dead npcs)
+      (make-dead npc)
       (assoc npc :position 
 	     (move-non-player 
 	      (npc :position) 
