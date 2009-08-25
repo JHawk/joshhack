@@ -13,7 +13,7 @@
 ;;;; World State
 
 (def max-x 15)
-(def max-y 30)
+(def max-y 15)
 
 (def world-state (ref (world/gen-world max-x max-y)))
 (def sprite-state (ref (sprite/gen-sprites @world-state)))
@@ -52,24 +52,16 @@
 
 (defn- melee-npc
   [npcs]
-  (do
-    (println "*****")
-    (println (count npcs))
-    (println "player")
-    (println @player-state)
-    (println "npcs") 
-    (for [{pos :position dead :dead la :last-action attack :attack :as npc} 
-	  npcs]
-      (let [attacks (if (and (not dead)
-			     (= la :none)
-			     (some (fn [x] (= (:position @player-state) x)) (npc/melee-range npc compass)))
-		      (do (println "hit")
-			  (alter player-state assoc :hit-points (- (:hit-points @player-state) attack))
-			  (println @player-state)))]
-	(do (println npc)
-	    (if attacks
-	      (assoc npc :last-action :attacked)
-	      npc))))))
+  (for [{pos :position dead :dead attack :attack :as npc} 
+	npcs]
+    (let [attacks (if (and (not dead)
+			   (some (fn [x] (= (:position @player-state) x)) (npc/melee-range npc compass)))
+		    (do (println "hit")
+			(alter player-state assoc :hit-points (- (:hit-points @player-state) attack))
+			(println @player-state)))]
+	  (if attacks
+	    (assoc npc :last-action :attacked)
+	    npc))))
 
 (defn- move-npc
   [npcs]

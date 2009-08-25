@@ -66,13 +66,9 @@
   (assoc npc :dead true :tile :dead-body))
 
 (defn move
-  [dir npc world player]
-  (let [new-pos
-	(player/get-new-pos
-	 (:position npc)
-	 world
-	 dir)]
-    (if (not (= (:postion player) new-pos))
+  [dir {pos :position la :last-action :as npc} w p]
+  (let [new-pos (player/get-new-pos pos w dir)]
+    (if (and (not (= (:postion p) new-pos)) (not (= la :attacked)))
       (assoc npc :position new-pos :last-action :moved)
       (assoc npc :last-action :none))))
 

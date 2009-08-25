@@ -346,14 +346,3 @@
 				(symbol-world :none)
 				(symbol-world ((w row) token))))
 			    [\newline]))))))
-
-
-
-
-;;;; testing - fixing x y 
-;    (apply str (for [row w] 
-	;	 (apply str (concat (for [token (doall row)] 
-		;		      (symbol-world token))
-			;	    [\newline]))))))   
-
-
