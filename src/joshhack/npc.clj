@@ -6,21 +6,27 @@
 ;;;; 
 ;;;; Non-Player Generation
 
-(defstruct npc :position :tile :attack :hit-points :vision :last-action :dead)
+(defstruct npc :attack :hit-points :vision :position :tile :destination :last-action :dead)
 
 (def tile-types [:bandit :snake :zombie :squirrel])
 
 (defn gen-npc
   "Creates npc"
   [world type]
-  (struct npc 
+  (struct npc
+	  
+	  ;;; stats
+	  2 ; attack
+	  10; hit points 
+	  10; vision
+
+	  ;;; state
 	  (world/get-floor-tile world)
 	  (nth tile-types type)
-	  5
-	  10
-	  10
-	  :none
-	  false))
+	  :none ; destination
+	  :none ; last action 
+	  false ; dead flag
+	  ))
 
 (defn gen-random-npcs
   [w]
