@@ -23,9 +23,9 @@
 	  10; vision
 
 	  ;;; state
-	  (world/get-floor-tile world)
-	  (nth tile-types type)
-	  (nth mood-types type)
+	  (world/get-floor-tile world) ; position 
+	  (nth tile-types type) ; tile
+	  (nth mood-types mood) ; mood 
 	  :none ; destination
 	  :none ; last action 
 	  false ; dead flag

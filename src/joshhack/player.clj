@@ -5,18 +5,24 @@
 ;;;; 
 ;;;; Player Generation
 
-(defstruct player :position :tile :attack :hit-points :vision)
+(defstruct player :attack :hit-points :vision :position :tile :on-level)
 
 ;;; TODO - make sure player doesn't gen ontop of npc & col detection 
 (defn gen-player
   "Creates player"
   [world]
   (struct player 
+
+	  ;;; stats
+	  5 ; attack
+	  10; hit points 
+	  10; vision
+
+	  ;;; state
 	  (world/get-floor-tile world)
 	  :player
-	  5
-	  10
-	  15))
+	  0
+	  ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 

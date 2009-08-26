@@ -12,13 +12,14 @@
 ;;;; 
 ;;;; World State
 
-(def max-x 70)
-(def max-y 70)
+(def max-x 30)
+(def max-y 30)
 
-(def world-state (ref (world/gen-world max-x max-y)))
-(def sprite-state (ref (sprite/gen-sprites @world-state)))
-(def npc-state (ref (npc/gen-random-npcs @world-state)))
-(def player-state (ref (player/gen-player @world-state)))
+(def world-state (ref [(world/gen-world max-x max-y)]))
+(def sprite-state (ref [(sprite/gen-sprites (first @world-state))]))
+(def npc-state (ref [(npc/gen-random-npcs (first @world-state))]))
+(def player-state (ref (player/gen-player (first @world-state))))
+(def turns (ref 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -33,16 +34,38 @@
 	      :southeast [1 1]
 	      :southwest [-1 1]})
 
+
+conj  
+(def level (:on-level @player-state))
+
+(defn- total-levels [] (count @world-state))
+
+(defn- make-new-level
+  []
+  (let [new-level (last (alter world-state conj (world/gen-world max-x max-y)))]
+    (do (alter sprite-state conj (sprite/gen-sprites new-level))
+	(alter npc-state conj (npc/gen-random-npcs new-level))
+	new-level)))
+
+(defn- get-level [] (if (> (total-levels) level) 
+		      (nth @world-state level) 
+		      make-new-level))
+
+(defn- get-sprites [] (nth @sprite-state level))
+
+(defn- get-npcs [] (nth @npc-state level))
+
 (defn values 
   [coll]
   (for [key (keys coll)] (key coll)))
 
 (defn- do-sprites
   [pos]
-  (if (some (fn [x] (= pos x)) (values @sprite-state))
-	(do (println @sprite-state)
+  (let [sprites (get-sprites)]
+  (if (some (fn [x] (= pos x)) (values sprites))
+	(do (println sprites)
 	    pos)
-	pos))
+	pos)))
 
 (defn- change-player-pos
   [pos]
@@ -53,9 +76,9 @@
   (let [new-pos 
 	(player/get-new-pos 
 	 (:position @player-state) 
-	 @world-state 
+	 (get-level) 
 	 dir)]
-    (if (not (npc/some-npc-defending? new-pos @npc-state))
+    (if (not (npc/some-npc-defending? new-pos (get-npcs)))
       (-> new-pos
 	  do-sprites
 	  change-player-pos)
@@ -63,9 +86,10 @@
     
 (defn- melee-player 
   [new-pos]
-  (if (= clojure.lang.LazilyPersistentVector (class new-pos))
-    (ref-set npc-state (npc/receive-attack (:attack @player-state) new-pos @npc-state))
-    @npc-state))
+  (let [npcs (get-npcs)]
+    (if (= clojure.lang.LazilyPersistentVector (class new-pos))
+      (alter npc-state assoc level (npc/receive-attack (:attack @player-state) new-pos npcs))
+      npcs)))
 
 (defn- melee-npc
   [npcs]
@@ -76,30 +100,38 @@
 			   (some 
 			    (fn [x] (= (:position @player-state) x)) 
 			    (npc/melee-range npc (values compass)))) 
-		    (do 
-		    (alter player-state assoc :hit-points (- (:hit-points @player-state) attack))
-		      
-			(println "hit")
-			(println "NPC")
-			(println npc)
-			(println "player")
-			(println @player-state)
-			(println "*****"))
+;		    (do 
+		      (alter player-state assoc :hit-points (- (:hit-points @player-state) attack))
+;		      
+;		      (println "hit")
+;		      (println "NPC")
+;		      (println npc)
+;		      (println "player")
+;		      (println @player-state)
+;		      (println "*****"))
 		    )]
       (if attacks
 	(assoc npc :last-action :attacked)
 	npc))))
 
 (defn- move-npc
-  [npcs]
-  (ref-set npc-state (npc/move-npcs npcs @world-state @player-state)))
+  [_]
+  (let [npcs (get-npcs)]
+    (alter npc-state assoc level (npc/move-npcs npcs (get-level) @player-state))))
 
 (defn- draw
   ([] (draw nil))
   ([_] 
-       (if (<= (:hit-points @player-state) 0)
-	 "GAME OVER"
-	 (world/draw-world @world-state @sprite-state @player-state @npc-state))))
+     (if (<= (:hit-points @player-state) 0)
+       "GAME OVER"
+       (world/draw-world 
+	(get-level) 
+	(get-sprites) 
+	@player-state
+	(get-npcs)))))
+
+(defn inc-turns [_]
+       (ref-set turns (inc @turns)))
 
 (defn- do-turn 
   [dir]
@@ -110,6 +142,7 @@
 		melee-player 
 		melee-npc
 		move-npc
+		inc-turns
 		draw))
     (draw)))
 
