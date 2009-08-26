@@ -12,8 +12,8 @@
 ;;;; 
 ;;;; World State
 
-(def max-x 30)
-(def max-y 30)
+(def max-x 70)
+(def max-y 70)
 
 (def world-state (ref (world/gen-world max-x max-y)))
 (def sprite-state (ref (sprite/gen-sprites @world-state)))
@@ -33,15 +33,32 @@
 	      :southeast [1 1]
 	      :southwest [-1 1]})
 
+(defn values 
+  [coll]
+  (for [key (keys coll)] (key coll)))
+
+(defn- do-sprites
+  [pos]
+  (if (some (fn [x] (= pos x)) (values @sprite-state))
+	(do (println @sprite-state)
+	    pos)
+	pos))
+
+(defn- change-player-pos
+  [pos]
+  (alter player-state assoc :position pos))
+
 (defn- move-player
   [dir]
   (let [new-pos 
 	(player/get-new-pos 
 	 (:position @player-state) 
 	 @world-state 
-	 (dir compass))]
+	 dir)]
     (if (not (npc/some-npc-defending? new-pos @npc-state))
-      (alter player-state assoc :position new-pos)
+      (-> new-pos
+	  do-sprites
+	  change-player-pos)
       new-pos)))
     
 (defn- melee-player 
@@ -54,21 +71,24 @@
   [npcs]
   (for [{pos :position dead :dead attack :attack :as npc} 
 	npcs]
-    (let [attacks (if (and (not dead)
-			   (some (fn [x] (= (:position @player-state) x)) (npc/melee-range npc compass)))
-		    (do (alter player-state assoc :hit-points (- (:hit-points @player-state) attack))
+    (let [attacks (if 
+		      (and (not dead)
+			   (some 
+			    (fn [x] (= (:position @player-state) x)) 
+			    (npc/melee-range npc (values compass)))) 
+		    (do 
+		    (alter player-state assoc :hit-points (- (:hit-points @player-state) attack))
 		      
 			(println "hit")
 			(println "NPC")
 			(println npc)
 			(println "player")
 			(println @player-state)
-			(println "*****")
-			
-			))]
-	  (if attacks
-	    (assoc npc :last-action :attacked)
-	    npc))))
+			(println "*****"))
+		    )]
+      (if attacks
+	(assoc npc :last-action :attacked)
+	npc))))
 
 (defn- move-npc
   [npcs]
@@ -85,6 +105,7 @@
   [dir]
   (if dir
     (dosync (-> dir 
+		compass 
 		move-player 
 		melee-player 
 		melee-npc
@@ -105,8 +126,6 @@
 	      \x :south
 	      \z :southwest})
 
-;; TODO eventually, this will need to communicate more than just a direction, like whether to look
-;; at inventory or cast a spell - add these as keys to the map above
 (defn gen-keyboard-handler
   [text-area]
   (proxy [KeyListener] []
@@ -117,13 +136,15 @@
 (defn -main
   [& args]
   (let [frame (JFrame.)
-	text-area (JTextArea. max-x max-y)]
+	text-area (JTextArea. max-x max-y)
+	size-by-vision (int (* (:vision @player-state) 3))
+	font-size 10]
     (doto frame
-      (.setSize (* 8 40) (+ 25 (* 12 40))) ;;; TODO this is incorrect 
+      (.setSize (* font-size size-by-vision) (* font-size size-by-vision)) ;;; TODO this is incorrect 
       (.add (doto (JPanel.)
 	      (.add (doto text-area
 		      (.setEditable false)
-		      (.setFont (Font. "Monospaced" (. Font PLAIN) 10))
+		      (.setFont (Font. "Monospaced" (. Font PLAIN) font-size))
 		      (.setText (draw))
 		      (.addKeyListener (gen-keyboard-handler text-area))))))
       (.setResizable false)

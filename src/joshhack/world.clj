@@ -324,12 +324,10 @@
   [w player]
   (assoc-in w (reverse-for-assoc-in (:position player)) (:tile player)))
 
-
-;; TODO This draws the world at a 90 degree angle!!!
 (defn draw-world
   "Returns a string representation of the world with sprites"
   [world sprites {[x y] :position vision :vision :as player} npcs]
-  (let [size (int (* vision 1.5))
+  (let [size (int (/ (* vision 1.5) 2))
 	w (render-player
 	   (render-npcs
 	    (render-sprites world sprites)

@@ -50,10 +50,9 @@
 ; - add the same compass key to them until los exhausted or tile excludes 
 
 (defn melee-range
-  [{pos :position :as npc} dir-map]
-  (for [key (keys dir-map)] 
-    [(+ (first (key dir-map)) (first pos)) 
-     (+ (second (key dir-map)) (second pos))]))
+  [{pos :position :as npc} dirs]
+  (for [dir dirs] 
+    [(+ (first dir) (first pos)) (+ (second dir) (second pos))]))
 
 (defn attacked?
   [{pos :position dead :dead :as npc} pos-attacked] 
