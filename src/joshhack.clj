@@ -74,13 +74,12 @@
   [npcs]
   (ref-set npc-state (npc/move-npcs npcs @world-state @player-state)))
 
-(defn- check-end-game
-  [_]
-  )
-
 (defn- draw
   ([] (draw nil))
-  ([_] (world/draw-world @world-state @sprite-state @player-state @npc-state)))
+  ([_] 
+       (if (<= (:hit-points @player-state) 0)
+	 "GAME OVER"
+	 (world/draw-world @world-state @sprite-state @player-state @npc-state))))
 
 (defn- do-turn 
   [dir]
@@ -90,7 +89,6 @@
 		melee-player 
 		melee-npc
 		move-npc
-		check-end-game
 		draw))
     (draw)))
 
