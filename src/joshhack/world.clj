@@ -284,6 +284,7 @@
       ;;; sprites
       :stairs-down ">"
       :stairs-up "<"
+      :equipment "$"
       
       ;;; npcs
       :bandit "B"

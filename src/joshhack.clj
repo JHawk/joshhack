@@ -16,9 +16,9 @@
 (def max-y 30)
 
 (def world-state (ref [(world/gen-world max-x max-y)]))
-(def sprite-state (ref [(sprite/gen-sprites (first @world-state))]))
 (def npc-state (ref [(npc/gen-random-npcs (first @world-state))]))
 (def player-state (ref (player/gen-player (first @world-state))))
+(def sprite-state (ref [(sprite/gen-sprites (first @world-state) @player-state)]))
 (def turns (ref 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -34,9 +34,7 @@
 	      :southeast [1 1]
 	      :southwest [-1 1]})
 
-
-conj  
-(def level (:on-level @player-state))
+(def level (:current-level @player-state))
 
 (defn- total-levels [] (count @world-state))
 
@@ -47,25 +45,56 @@ conj
 	(alter npc-state conj (npc/gen-random-npcs new-level))
 	new-level)))
 
-(defn- get-level [] (if (> (total-levels) level) 
-		      (nth @world-state level) 
-		      make-new-level))
+(defn- get-level 
+  [] 
+  (if (> (total-levels) level) 
+    (nth @world-state level) 
+    make-new-level))
 
-(defn- get-sprites [] (nth @sprite-state level))
+(defn- get-sprites 
+  [] 
+  (if (> (total-levels) level) 
+    (nth @sprite-state level)
+    (alter sprite-state conj (sprite/gen-sprites get-level))))
 
-(defn- get-npcs [] (nth @npc-state level))
+(defn- get-npcs 
+  [] 
+  (if (> (total-levels) level) 
+    (nth @npc-state level)
+    (alter npc-state conj (npc/gen-random-npcs get-level))))
 
-(defn values 
-  [coll]
-  (for [key (keys coll)] (key coll)))
+(defn values [coll] (for [key (keys coll)] (key coll)))
+
+(defn do-sprite 
+  [sprite]
+  (let [k (first sprite)]
+    (if (= k :stairs-down)
+      (do 
+	(println "k")
+	(let [p @player-state]
+	  (alter player-state assoc 
+		 :current-level (+ (:current-level p) 1) 
+		 :previous-level (+ (:current-level p) 1)))
+	(let [sp (:stairs-up (get-sprites)) ;;; TODO fix get-sprites
+	      r (:position (alter player-state assoc :position sp))]
+	  (println sp)
+	  (println r)
+	  (println @player-state)
+	  r))
+      (do 
+	(println sprite)
+	(println (second sprite))
+	(second sprite)))))
 
 (defn- do-sprites
   [pos]
-  (let [sprites (get-sprites)]
-  (if (some (fn [x] (= pos x)) (values sprites))
-	(do (println sprites)
-	    pos)
-	pos)))
+  (let [sprites-todo (filter (fn [x] (= (second x) pos)) (get-sprites))]
+    (if (empty? sprites-todo)
+      pos
+      (do 
+	(let [result (first (for [s sprites-todo] (do-sprite s)))]
+	  (println result)
+	  result)))))
 
 (defn- change-player-pos
   [pos]

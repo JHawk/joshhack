@@ -5,7 +5,7 @@
 ;;;; 
 ;;;; Player Generation
 
-(defstruct player :attack :hit-points :vision :position :tile :on-level)
+(defstruct player :attack :hit-points :vision :position :tile :current-level :previous-level)
 
 ;;; TODO - make sure player doesn't gen ontop of npc & col detection 
 (defn gen-player
@@ -22,6 +22,7 @@
 	  (world/get-floor-tile world)
 	  :player
 	  0
+	  -1
 	  ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
