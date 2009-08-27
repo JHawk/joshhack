@@ -17,15 +17,10 @@
   
 (defn add-stairs
   [w {pl :previous-level cl :current-level pos :position :as player} sprites]
-  (if (< pl cl)
-    (if (= cl 0)
-      (add-sprite-rand w :stairs-down sprites)
-      (add-sprite-pos (add-sprite-rand w :stairs-down sprites) :stairs-up pos))
-    (add-sprite-pos (add-sprite-rand w :stairs-up sprites) :stairs-down pos)))
-
-(defn add-stairs-down
-  [w p]
-  ())
+  (if (= cl 0)
+    (add-sprite-rand w :stairs-down sprites)
+;      (add-sprite-pos (add-sprite-rand w :stairs-down sprites) :stairs-up pos))
+    (add-sprite-rand w :stairs-up (add-sprite-rand w :stairs-down sprites))))
 
 (defn gen-sprites
   "Adds starting sprites"

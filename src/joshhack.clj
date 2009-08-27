@@ -38,13 +38,7 @@
 
 (defn- total-levels [] (count @world-state))
 
-(defn- build-new-level? [] 
-  (let [a (> (total-levels) (+ (level) 1))]
-    (do (println (total-levels))
-	(println (level))
-	(println a)
-	(println "*****")
-	a)))
+(defn- build-new-level? [] (< (total-levels) (+ (level) 1)))
 
 (defn- make-new-level
   []
@@ -56,42 +50,42 @@
 (defn- get-level 
   [] 
   (if (build-new-level?) 
-    (nth @world-state (level)) 
-    (make-new-level)))
+    (make-new-level)
+    (nth @world-state (level))))
 
 (defn- get-sprites 
   [] 
   (if (build-new-level?) 
-    (alter sprite-state conj (sprite/gen-sprites (get-level) @player-state))
+    (do
+      (get-level)
+      (nth @sprite-state (level)))
     (nth @sprite-state (level))))
 
 (defn- get-npcs 
   [] 
   (if (build-new-level?) 
-    (nth @npc-state (level))
-    (alter npc-state conj (npc/gen-random-npcs (get-level)))))
+    (do
+      (get-level)
+      (nth @npc-state (level)))
+    (nth @npc-state (level))))
 
 (defn values [coll] (for [key (keys coll)] (key coll)))
 
+;;; make this multimethod in future - so very ugly  
 (defn do-sprite 
   [sprite]
-  (let [k (first sprite)]
-    (if (= k :stairs-down)
-      (do 
-	(println "k")
-	(let [p @player-state]
-	  (alter player-state assoc 
-		 :current-level (+ (:current-level p) 1) 
-		 :previous-level (+ (:previous-level p) 1)))
-	(let [p @player-state
-	      sp (:stairs-up (get-sprites))
-	      r (:position (alter player-state assoc :position sp))]
-	  (println p)
-	  (println sp)
-	  (println r)
-	  (println @player-state)
-	  r))
-      (second sprite))))
+  (condp = (first sprite)
+    :stairs-down (do (let [p @player-state]
+		       (alter player-state assoc 
+			      :current-level (+ (:current-level p) 1) 
+			      :previous-level (+ (:previous-level p) 1))
+		       (:position (alter player-state assoc 
+					 :position (:stairs-up (get-sprites))))))
+    :stairs-up (do (alter player-state assoc 
+			  :current-level (- (:current-level @player-state) 1))
+		   (:position (alter player-state assoc 
+				     :position (:stairs-down (get-sprites)))))
+    (second sprite)))
 
 (defn- do-sprites
   [pos]
