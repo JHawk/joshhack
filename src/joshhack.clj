@@ -34,34 +34,42 @@
 	      :southeast [1 1]
 	      :southwest [-1 1]})
 
-(def level (:current-level @player-state))
+(defn- level [] (:current-level @player-state))
 
 (defn- total-levels [] (count @world-state))
+
+(defn- build-new-level? [] 
+  (let [a (> (total-levels) (+ (level) 1))]
+    (do (println (total-levels))
+	(println (level))
+	(println a)
+	(println "*****")
+	a)))
 
 (defn- make-new-level
   []
   (let [new-level (last (alter world-state conj (world/gen-world max-x max-y)))]
-    (do (alter sprite-state conj (sprite/gen-sprites new-level))
+    (do (alter sprite-state conj (sprite/gen-sprites new-level @player-state))
 	(alter npc-state conj (npc/gen-random-npcs new-level))
 	new-level)))
 
 (defn- get-level 
   [] 
-  (if (> (total-levels) level) 
-    (nth @world-state level) 
-    make-new-level))
+  (if (build-new-level?) 
+    (nth @world-state (level)) 
+    (make-new-level)))
 
 (defn- get-sprites 
   [] 
-  (if (> (total-levels) level) 
-    (nth @sprite-state level)
-    (alter sprite-state conj (sprite/gen-sprites get-level))))
+  (if (build-new-level?) 
+    (alter sprite-state conj (sprite/gen-sprites (get-level) @player-state))
+    (nth @sprite-state (level))))
 
 (defn- get-npcs 
   [] 
-  (if (> (total-levels) level) 
-    (nth @npc-state level)
-    (alter npc-state conj (npc/gen-random-npcs get-level))))
+  (if (build-new-level?) 
+    (nth @npc-state (level))
+    (alter npc-state conj (npc/gen-random-npcs (get-level)))))
 
 (defn values [coll] (for [key (keys coll)] (key coll)))
 
@@ -74,27 +82,23 @@
 	(let [p @player-state]
 	  (alter player-state assoc 
 		 :current-level (+ (:current-level p) 1) 
-		 :previous-level (+ (:current-level p) 1)))
-	(let [sp (:stairs-up (get-sprites)) ;;; TODO fix get-sprites
+		 :previous-level (+ (:previous-level p) 1)))
+	(let [p @player-state
+	      sp (:stairs-up (get-sprites))
 	      r (:position (alter player-state assoc :position sp))]
+	  (println p)
 	  (println sp)
 	  (println r)
 	  (println @player-state)
 	  r))
-      (do 
-	(println sprite)
-	(println (second sprite))
-	(second sprite)))))
+      (second sprite))))
 
 (defn- do-sprites
   [pos]
   (let [sprites-todo (filter (fn [x] (= (second x) pos)) (get-sprites))]
     (if (empty? sprites-todo)
       pos
-      (do 
-	(let [result (first (for [s sprites-todo] (do-sprite s)))]
-	  (println result)
-	  result)))))
+      (first (for [s sprites-todo] (do-sprite s))))))
 
 (defn- change-player-pos
   [pos]
@@ -117,28 +121,18 @@
   [new-pos]
   (let [npcs (get-npcs)]
     (if (= clojure.lang.LazilyPersistentVector (class new-pos))
-      (alter npc-state assoc level (npc/receive-attack (:attack @player-state) new-pos npcs))
+      (alter npc-state assoc (level) (npc/receive-attack (:attack @player-state) new-pos npcs))
       npcs)))
 
 (defn- melee-npc
   [npcs]
   (for [{pos :position dead :dead attack :attack :as npc} 
 	npcs]
-    (let [attacks (if 
-		      (and (not dead)
+    (let [attacks (if (and (not dead)
 			   (some 
 			    (fn [x] (= (:position @player-state) x)) 
-			    (npc/melee-range npc (values compass)))) 
-;		    (do 
-		      (alter player-state assoc :hit-points (- (:hit-points @player-state) attack))
-;		      
-;		      (println "hit")
-;		      (println "NPC")
-;		      (println npc)
-;		      (println "player")
-;		      (println @player-state)
-;		      (println "*****"))
-		    )]
+			    (npc/melee-range npc (values compass))))
+		    (alter player-state assoc :hit-points (- (:hit-points @player-state) attack)))]
       (if attacks
 	(assoc npc :last-action :attacked)
 	npc))))
@@ -146,7 +140,7 @@
 (defn- move-npc
   [_]
   (let [npcs (get-npcs)]
-    (alter npc-state assoc level (npc/move-npcs npcs (get-level) @player-state))))
+    (alter npc-state assoc (level) (npc/move-npcs npcs (get-level) @player-state))))
 
 (defn- draw
   ([] (draw nil))
@@ -207,7 +201,11 @@
 	      (.add (doto text-area
 		      (.setEditable false)
 		      (.setFont (Font. "Monospaced" (. Font PLAIN) font-size))
-		      (.setText (draw))
+		      (.setText (world/draw-world 
+				 (first @world-state) 
+				 (first @sprite-state) 
+				 @player-state
+				 (first @npc-state)))
 		      (.addKeyListener (gen-keyboard-handler text-area))))))
       (.setResizable false)
       (.setDefaultCloseOperation (. JFrame EXIT_ON_CLOSE))
